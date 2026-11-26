@@ -1,0 +1,5 @@
+ALINEADOR DE ANTENAS - archivos para subir a internet (GitHub Pages)
+Archivos (suba estos 5, sueltos, no la carpeta):
+  index.html  sw.js  manifest.webmanifest  icon-192.png  icon-512.png
+Para actualizar la app luego: suba index.html de nuevo y cambie VERSION en sw.js (alineador-v1 -> alineador-v2).
+Abra la app dos veces para que el teléfono tome la versión nueva.

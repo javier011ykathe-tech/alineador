@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alineador de antenas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#050d18">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#050d18;--card:#0a1a2c;--tx:#e9f0fb;--mut:#8fa9c4;--ac:#19d3ff;--ac2:#0a9fd0;--ok:#2fd16b;--warn:#ffb02e;--bad:#ff5d5d;--bd:#1d3b57}
+body.light{--bg:#eef2f7;--card:#fff;--tx:#101a2b;--mut:#56667f;--ac:#0b8f84;--ac2:#086d65;--bd:#d3dbe8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,"Segoe UI",Roboto,sans-serif;padding:12px 12px 40px;max-width:560px;margin-inline:auto}
+h1{font-size:20px;margin:0}
+h2{font-size:16px;margin:0 0 10px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.card{box-shadow:0 0 14px #19d3ff14 inset;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.warn{border-color:var(--warn);font-size:13px;color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{font-size:12px;padding:3px 9px;border-radius:99px;border:1px solid var(--bd);color:var(--mut)}
+.chip.ok{color:var(--ok);border-color:var(--ok)}.chip.no{color:var(--bad);border-color:var(--bad)}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+input,select{width:100%;padding:13px;font-size:17px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{width:100%;padding:10px 14px;font-size:14px;font-weight:650;letter-spacing:.2px;border:0;border-radius:10px;background:linear-gradient(180deg,var(--ac),var(--ac2));color:#04201d;margin-top:10px;box-shadow:inset 0 1px 0 #ffffff40,0 2px 6px #0004;transition:transform .08s,filter .15s;cursor:pointer}
+button:active{transform:scale(.97);filter:brightness(.92)}
+body.light button:not(.alt){color:#fff}
+button.warnb{background:linear-gradient(180deg,#ffbf47,#e08e0b);color:#2a1700}
+button.alt{background:var(--card);color:var(--tx);border:1px solid var(--bd);box-shadow:none}
+button.icon{width:auto;padding:6px 10px;margin:0;font-size:16px}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res div{background:var(--bg);border-radius:10px;padding:10px}
+.res small{display:block;color:var(--mut);font-size:12px}
+.res b{font-size:24px;font-variant-numeric:tabular-nums}
+.res .wide{grid-column:1/3}
+.msg{min-height:20px;font-size:13px;color:var(--bad);margin-top:8px}
+#info{font-size:13px;color:var(--mut);margin-top:6px}
+#cmpWrap{max-width:340px;margin:0 auto}
+svg{width:100%;display:block}
+.corr{text-align:center;font-size:22px;font-weight:800;margin-top:6px}
+.corr.ok{color:var(--ok)}.corr.go{color:var(--warn)}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-top:8px}
+.kv small{display:block;color:var(--mut);font-size:12px}.kv b{font-size:22px}
+#cam{position:fixed;inset:0;background:#000;z-index:50;display:none;overflow:hidden}
+#cam.on{display:block}
+#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cam .ov{position:absolute;left:0;right:0;color:#fff;text-align:center;text-shadow:0 1px 4px #000,0 0 2px #000;pointer-events:none}
+#top{top:0;padding:calc(10px + env(safe-area-inset-top,0px)) 10px 10px;background:linear-gradient(#000a,#0000)}
+#bot{bottom:0;padding:30px 10px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(#0000,#000b)}
+#msg{font-size:26px;font-weight:800}
+#msg2{font-size:18px;font-weight:600;min-height:24px}
+#cross{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border:2px solid #fff8;border-radius:50%;pointer-events:none}
+#cross:before,#cross:after{content:"";position:absolute;background:#fff8}
+#cross:before{left:50%;top:-10px;bottom:-10px;width:2px}#cross:after{top:50%;left:-10px;right:-10px;height:2px}
+#hor{position:absolute;left:0;right:0;height:0;border-top:2px dashed #ffe066;pointer-events:none}
+#hor span{position:absolute;right:6px;top:-20px;font-size:11px;color:#ffe066}
+#tgt{position:absolute;transform:translate(-50%,-50%);text-align:center;color:#fff;text-shadow:0 1px 4px #000;pointer-events:none;white-space:nowrap}
+#tgt .ret,#tgt .arw{filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000)}
+#tgt.ok .ret{filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 8px #2fd16b)}
+#camctl{position:absolute;right:10px;top:50%;display:flex;flex-direction:column;gap:8px;z-index:2}
+#camctl button{width:auto;padding:7px 11px;margin:0;background:#000a;color:#fff;border:1px solid #fff5}
+#camctl span{color:#fff;font-size:12px;text-align:center;text-shadow:0 1px 3px #000}
+#vid{transform-origin:50% 50%}
+#tune{position:absolute;left:8px;right:66px;bottom:calc(160px + env(safe-area-inset-bottom,0px));z-index:2;color:#fff;background:#0008;border-radius:12px;padding:6px 8px;text-shadow:0 1px 3px #000}
+#tune .tn-c{background:#000a;color:#fff;border-color:#fff5}
+#tune .tn-s2,#tune .tn-l{color:#fff}
+#tune #tuSave{margin-top:6px;padding:8px}
+#cam.tower #tune{display:none}
+.tn-r{font-size:24px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.tn-s2{font-size:12px;color:var(--mut);text-align:center;margin-bottom:4px}
+.tn-l{font-size:11px;color:var(--mut);margin-top:4px}
+.tn-s{position:relative;display:flex;gap:6px;overflow-x:auto;padding:5px 2px;scrollbar-width:none}
+.tn-c{flex:0 0 auto;width:auto;min-width:48px;margin:0;padding:10px 6px;font-size:15px;font-weight:700}
+.tn-c.on,#tune .tn-c.on{background:linear-gradient(180deg,var(--ac),var(--ac2));color:#04201d;border-color:var(--ac);box-shadow:0 0 0 2px #fff7}
+
+#hud{margin-bottom:12px;padding:10px;border-radius:18px;background:radial-gradient(120% 90% at 50% 0%,#0b2a46,#050d18);border:1px solid #19d3ff66;box-shadow:0 0 18px #19d3ff22,0 0 0 1px #000 inset;color:#e9f0fb}
+.hb{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;margin-bottom:8px;color:#bfe6ff}
+.hb b{font-size:13px;color:#19d3ff}
+.hg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.hg2{display:grid;grid-template-columns:1fr 1.5fr;gap:6px;margin-top:6px}
+.gg{background:radial-gradient(circle at 50% 35%,#0e2740,#050b14);border:2px solid #7fb4d8aa;border-radius:16px;padding:4px;text-align:center}
+.gg svg{width:100%;display:block}
+.gt{font-size:10px;font-weight:700;color:#8fd8ff;letter-spacing:.4px}
+.gv{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+.gs{font-size:11px;min-height:15px;color:#bfe6ff}
+.dp{background:radial-gradient(circle at 50% 0%,#0c2a45,#050b14);border:2px solid #19d3ff88;border-radius:16px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;align-content:start}
+.dp small{display:block;color:#8fd8ff;font-size:10px}.dp b{font-size:14px;font-variant-numeric:tabular-nums}
+.dp .w{grid-column:1/3;font-size:11px;color:#bfe6ff}
+.rs{display:flex;gap:8px;margin-top:6px;align-items:center}
+.rs button{width:56px;margin:0;font-size:22px;padding:6px 0}
+.rs input{flex:1;min-width:0;text-align:center;font-size:24px;font-weight:800;padding:6px;background:#050b14;color:#fff;border:2px solid #19d3ff88}
+.hn{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.hn button{margin:0;padding:10px 2px;font-size:12px;background:linear-gradient(180deg,#0e2c47,#07131f);color:#e9f0fb;border:1px solid #19d3ff99;box-shadow:0 0 10px #19d3ff33 inset}
+body.light button.hn-b,body.light .hn button,body.light .rs button{color:#e9f0fb}
+#fovbox{position:absolute;left:10px;right:80px;bottom:calc(110px + env(safe-area-inset-bottom,0px));color:#fff;font-size:12px;z-index:2}
+#fovbox input{padding:0;border:0;background:none}
+.rssi{display:flex;gap:10px;align-items:center}
+.rssi input{flex:1;min-width:0;text-align:center;font-size:40px;font-weight:800;padding:8px;font-variant-numeric:tabular-nums}
+button.step{width:56px;margin:0;font-size:24px;padding:6px 0}
+#meter{height:12px;border-radius:99px;background:var(--bg);margin:12px 0;overflow:hidden}
+#mBar{display:block;height:100%;width:0;transition:width .2s}
+details{margin-top:12px}summary{color:var(--mut);padding:6px 0}
+.sm{font-size:13px;color:var(--mut);text-align:center;margin-top:4px;min-height:18px}
+#tw{position:fixed;inset:0;z-index:53;display:none;flex-direction:column;justify-content:space-between;pointer-events:none;color:#fff;height:100vh;height:100dvh;overflow:hidden;padding:calc(6px + env(safe-area-inset-top,0px)) 6px calc(6px + env(safe-area-inset-bottom,0px))}
+#tw.on{display:flex}
+#tw:not(.cam){background:#0a1018}
+#tw button,#tw input{pointer-events:auto}
+#twTop{display:grid;grid-template-columns:1.1fr 1.1fr .8fr;gap:6px}
+.g{background:rgba(8,14,22,.6);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);border:1px solid #ffffff2a;border-radius:14px;padding:6px;text-align:center;text-shadow:0 1px 3px #000}
+.g svg{width:100%;display:block}
+.gl{font-size:12px;font-weight:700;line-height:1.25;margin-top:2px}
+#svR{height:25vh}
+.rg{position:relative}
+.rc{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:6px}
+#tw button.step{width:56px;height:40px;margin:0;padding:0;font-size:26px;background:rgba(255,255,255,.16);color:#fff;border:1px solid #fff4}
+#tw input#tRssi{flex:1;min-width:0;text-align:center;font-size:36px;font-weight:800;padding:0;height:46px;background:transparent;color:#fff;border:0;text-shadow:0 1px 3px #000}
+.tb{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:6px;margin-top:6px}
+.tb button{margin:0;padding:8px 4px;font-size:13px;background:rgba(255,255,255,.16);color:#fff;border:1px solid #fff4}
+#cam.tower #top,#cam.tower #bot,#cam.tower #fovbox,#cam.tower #camctl{display:none}
+.lk{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-top:10px}
+.lk b{font-size:17px}.lk small{color:var(--mut);display:block}
+.lk .r3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.lk button{margin:0;padding:7px 4px;font-size:13px}
+
+/* ===== Tablero tipo navegación (solo visual) ===== */
+:root{--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+html,body{height:100%}
+body{padding:0;max-width:none;overflow:hidden;font-size:13px}
+#app{height:100vh;height:100dvh;max-width:600px;margin:0 auto;display:flex;flex-direction:column}
+#app>header{margin:0;padding:calc(4px + env(safe-area-inset-top,0px)) 8px 2px}
+#app>header h1{font-size:12px;letter-spacing:1.6px;color:var(--ac)}
+#app main{flex:1;min-height:0;position:relative}
+.tab{display:none;height:100%;overflow:auto;padding:2px 8px 8px}
+.tab.on{display:block}
+#tabNav.on{display:flex;flex-direction:column;gap:5px}
+#tabNav #hud{margin:0;padding:6px;border-radius:12px;flex:0 0 auto}
+.hb{margin-bottom:4px;font-size:10px}.hb b{font-size:11px;letter-spacing:1px}
+.hg{gap:4px}.hg2{gap:4px;margin-top:4px}
+.gg{border-width:1px;border-radius:10px;padding:2px}
+.gg svg{max-height:13vh;margin:0 auto}
+.hg2 .gg svg{max-height:11vh}
+.gt{font-size:8.5px;letter-spacing:1px}
+.gv{font:700 15px/1.1 var(--mono)}
+.gs{font-size:10px;min-height:12px}
+.dp{border-width:1px;border-radius:10px;padding:4px 6px;gap:2px 6px}
+.dp small{font-size:8px;letter-spacing:.8px}.dp b{font:700 12px var(--mono)}.dp .w{font-size:9.5px}
+.rs{margin-top:4px}.rs button{width:44px;height:34px;font-size:20px;padding:0}.rs input{font:800 20px var(--mono);padding:2px;height:34px}
+@media (max-height:720px){.hg2{display:none}}
+.pn{border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:4px 7px 6px;flex:0 0 auto}
+.pt{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:1.4px;color:var(--ac);margin-bottom:2px}
+.pt #info{letter-spacing:0;color:var(--mut);font-size:9.5px;margin:0}
+.pn .g2{display:grid;grid-template-columns:1fr 1fr;gap:2px 6px}
+.pn label{margin:0;font-size:8px;letter-spacing:1px;color:var(--mut)}
+.pn input{font:600 20px var(--mono);height:42px;padding:4px 8px;border-radius:7px;color:var(--ok)}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.acts button{margin:0;padding:10px 2px;font-size:11.5px;letter-spacing:.3px}
+#tabNav .msg{min-height:12px;margin:0;font-size:11px}
+.tiny{font-size:9px;color:var(--mut);opacity:.75;text-align:center;line-height:1.25}
+#nav{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:5px 8px calc(5px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bd);background:var(--card)}
+#nav button{margin:0;padding:8px 1px;font-size:10.5px;letter-spacing:.3px;background:transparent;color:var(--mut);border:1px solid var(--bd);box-shadow:none}
+#nav button.on{color:var(--ac);border-color:var(--ac);background:#19d3ff14}
+/* ===== Modo torre: brújula a tamaño completo + datos a los lados ===== */
+#tw{display:none;padding:0;background:none;justify-content:initial}
+#tw.on{display:block}
+#tw:not(.cam){background:#04070b}
+#tw #svC{position:absolute;left:50%;top:43%;width:min(98vw,58vh);transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000)}
+#tw .col{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));width:74px;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+#twL{left:5px}#twR{right:5px}
+.tile{background:rgba(3,8,12,.66);border:1px solid #19d3ff66;border-radius:7px;padding:3px 2px 4px;text-align:center}
+.tile small{display:block;font-size:8px;letter-spacing:1px;color:#8fd8ff}
+.tile b{font:700 15px/1.15 var(--mono);color:#9dffbd;white-space:nowrap}
+#twB{position:absolute;left:5px;right:5px;bottom:calc(5px + env(safe-area-inset-bottom,0px));padding:5px;pointer-events:auto}
+#twB .rrow{display:grid;grid-template-columns:1fr 96px;gap:6px;align-items:center}
+#tw #svR{height:auto;max-height:14vh}
+#twB .rctl{display:flex;flex-direction:column;gap:3px}
+#tw .rctl button.step{width:100%;height:28px;font-size:20px;margin:0}
+#tw .rctl input#tRssi{width:100%;height:32px;font-size:22px;flex:none}
+.zr{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px;font:700 13px var(--mono)}
+.zr button{width:auto;margin:0;padding:6px 14px;font-size:13px;background:rgba(255,255,255,.16);color:#fff;border:1px solid #fff4}
+/* ===== Ajuste de alturas: todo en una pantalla ===== */
+.hb{white-space:nowrap;overflow:hidden;font-size:9px;gap:4px}.hb b{font-size:10px}
+.gg svg{max-height:11.5vh}
+.hg2 .gg svg{max-height:9.5vh}
+.hg2{grid-template-columns:.85fr 1.5fr}
+.dp{grid-template-columns:repeat(3,1fr);gap:1px 6px;align-content:center}
+.dp b{font-size:11.5px}
+.dp .w{grid-column:1/4}
+.rs button{height:30px}.rs input{height:30px;font-size:18px}
+.pn input{height:38px}
+.pt #info{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62%}
+#app>header .icon{padding:3px 8px;font-size:14px}
+#tw #tArr{opacity:.8}
+@media (max-height:760px){.tiny{display:none}.gg svg{max-height:10vh}.hg2{display:none}}
+/* ===== Torre: mapa A–B y línea de altura ===== */
+#twB .rrow2{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center}
+#tw #twMap{width:100%;max-height:17vh}
+#tw #svR{height:auto;max-height:9vh}
+#twB .rcol{display:flex;flex-direction:column;gap:4px;min-width:0}
+#twB .rbtn{display:flex;gap:4px;align-items:center}
+#tw .rbtn button.step{width:40px;height:34px;font-size:20px;margin:0}
+#tw .rbtn input#tRssi{flex:1;min-width:0;width:auto;height:34px;font-size:20px}
+#tline{position:absolute;left:0;right:0;height:0;border-top:3px solid #3dff8a;pointer-events:none;z-index:1;display:none}
+#cam.tower #tline{display:block}
+#tline span{position:absolute;left:50%;transform:translateX(-50%);top:4px;font:800 13px var(--mono);color:inherit;background:rgba(0,0,0,.55);padding:1px 8px;border-radius:8px;white-space:nowrap}
+/* ===== Torre v3 ===== */
+#twTop{position:absolute;left:5px;right:5px;top:calc(5px + env(safe-area-inset-top,0px));display:grid;grid-template-columns:92px 1fr 132px;gap:6px;align-items:start;pointer-events:none}
+#tw #twTop #svC{position:static;transform:none;width:92px;top:auto;left:auto}
+#twMid{text-align:center;color:#fff;text-shadow:0 1px 3px #000,0 0 2px #000;padding-top:4px}
+#twMid .gl{font-size:11.5px;margin:0 0 3px}
+#twRs{pointer-events:auto;background:rgba(3,8,12,.58);border:1px solid #19d3ff55;border-radius:10px;padding:3px}
+#tw #twRs #svR{height:auto;max-height:7.5vh}
+#twRs .rbtn{display:flex;gap:3px;align-items:center}
+#tw #twRs .rbtn button.step{width:30px;height:28px;font-size:18px;margin:0;padding:0}
+#tw #twRs .rbtn input#tRssi{flex:1;min-width:0;width:auto;height:28px;font-size:17px;padding:0}
+#tw .col{top:calc(112px + env(safe-area-inset-top,0px))}
+#twAtt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(54vw,27vh);pointer-events:none}
+#attSvg{width:100%;display:block;filter:drop-shadow(0 0 2px #000)}
+#attTxt{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:230px;text-align:center;margin-top:3px;text-shadow:0 1px 3px #000,0 0 2px #000;line-height:1.1}
+#attTxt small{display:block;font-size:9px;letter-spacing:2px;color:#8fd8ff}
+#attTxt b{display:block;font:800 26px var(--mono);color:#fff}
+#attTxt span{font:700 15px var(--mono)}
+#twB{padding:4px}
+#twMapT{position:relative;height:17vh;min-height:118px;border-radius:10px;overflow:hidden;background:#06121a;border:1px solid #19d3ff66}
+#mapTiles,#mapOv{position:absolute;left:0;top:0;width:100%;height:100%}
+#mapInfo{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.62);color:#fff;font:600 10px/1.35 var(--mono);padding:3px 6px;border-radius:6px;pointer-events:none;white-space:pre}
+#mapAttr{position:absolute;right:3px;bottom:2px;font-size:8px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000;pointer-events:none}
+#mapMsg{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:11px;color:#ffb02e;text-shadow:0 0 3px #000;pointer-events:none}
+#twMapT button{position:absolute;right:4px;width:auto;margin:0;padding:3px 8px;font-size:13px;background:rgba(0,0,0,.6);color:#fff;border:1px solid #fff5}
+#mapLayer{top:4px}#mapEarth{top:34px}
+#twTop{display:block}
+#twGauges{position:absolute;left:83px;right:83px;top:calc(112px + env(safe-area-inset-top,0px));display:grid;grid-template-columns:1fr 1fr;gap:5px;align-items:stretch;pointer-events:none}
+.gbox{background:rgba(3,8,12,.58);border:1px solid #19d3ff55;border-radius:10px;padding:4px;display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0}
+#tw #twGauges #svC{position:static;transform:none;width:100%;height:auto;top:auto;left:auto;filter:drop-shadow(0 0 2px #000)}
+#twRs{pointer-events:auto}
+#tw #twRs #svR{height:auto;max-height:none;width:100%}
+.gcap{text-align:center;font:700 12px var(--mono);text-shadow:0 1px 3px #000}
+.rbig{text-align:center;font:800 19px/1 var(--mono);text-shadow:0 1px 3px #000}
+.rinfo{text-align:center;font:700 10px/1.25 var(--mono);white-space:pre-line;min-height:12px}
+#rSpark{width:100%;height:26px;background:rgba(0,0,0,.35);border-radius:4px;display:block}
+.rsrc{text-align:center;font-size:9px;font-weight:700}
+/* Torre limpia: solo brújula al centro, todo arriba y sin recuadros */
+#twMid,#twRs,.gcap{display:none!important}
+#twGauges{display:block;left:80px;right:80px;top:calc(4px + env(safe-area-inset-top,0px))}
+.gbox{background:none;border:0;padding:0}
+#tw #twGauges #svC{width:100%;max-height:24vh;filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000)}
+#svC circle[fill^="rgba"]{fill:transparent}
+#tw .col{top:calc(6px + env(safe-area-inset-top,0px));width:72px;gap:6px}
+.tile{background:none;border:0;padding:0}
+.tile small{font-size:9px;text-shadow:0 0 3px #000,0 0 3px #000}
+.tile b{font-size:18px;text-shadow:0 0 3px #000,0 0 3px #000,0 1px 2px #000}
+#twAtt{top:calc(24vh + 24px);transform:translateX(-50%);width:min(30vw,13vh)}
+#attTxt b{font-size:20px}#attTxt span{font-size:13px}
+[hidden]{display:none!important}
+.gg:has(#gR){display:none}#hud .rs{display:none}#hud .hg{grid-template-columns:1fr 1fr}
+#twAtt{left:50%;transform:translateX(-50%)}
+#attTxt b{font-size:24px}#attTxt span{font-size:14px}
+#cam.tower #tline{border-top-width:2px!important;border-top-style:dotted!important;opacity:.8}
+#cam.tower #tline span{display:none}
+#cam.tower #cross{top:40%}
+#aimDot{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px;border-radius:50%;background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff9;pointer-events:none;display:none;z-index:3}
+#cam.tower #aimDot{display:block}
+#cam.tower #cross,#cam.tower #tline{display:none}
+/* Torre: horizonte delgado y punto de mira dentro de la V */
+#cam.tower #hor{border-top-width:1px!important;opacity:.4}
+#cam.tower #hor span{display:none}
+#aimDot{width:9px;height:9px;margin:-4.5px;border:1.5px solid #000;box-shadow:0 0 0 1.5px #fff9}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <h1>📡 Alineador de antenas</h1>
+  <div style="display:flex;gap:8px"><button class="icon alt" id="cfg" aria-label="Permisos">⚙️</button><button class="icon alt" id="theme" aria-label="Cambiar tema">☀️</button></div>
+</header>
+<main>
+<div class="tab on" id="tabNav">
+<section id="hud">
+  <div class="hb"><b>SDT · Alineador</b><span id="hClk"></span><span id="hLoc"></span></div>
+  <div class="hg">
+    <div class="gg"><svg id="gC" viewBox="0 0 200 200"></svg><div class="gt">RUMBO</div><div class="gv" id="vC">—</div><div class="gs" id="sC"></div></div>
+    <div class="gg"><svg id="gA" viewBox="0 0 200 200"></svg><div class="gt">INCLINACIÓN</div><div class="gv" id="vA">—</div><div class="gs" id="sA"></div></div>
+    <div class="gg"><svg id="gR" viewBox="0 14 200 100"></svg><div class="gt">SEÑAL RSSI</div><div class="gv" id="vR">—</div><div class="gs" id="sR"></div></div>
+  </div>
+  <div class="hg2">
+    <div class="gg"><svg id="gM" viewBox="0 0 200 200"></svg><div class="gt">MAPA · NORTE ARRIBA</div></div>
+    <div class="dp" id="hData"></div>
+  </div>
+  <div class="rs"><button id="hM">−</button><input id="hRssi" placeholder="RSSI dBm" inputmode="decimal"><button id="hP">+</button></div>
+</section>
+<div class="pn"><div class="pt"><span>📍 MI UBICACIÓN</span><span id="info"></span></div><div class="g2">
+    <div><label for="oLat">LATITUD</label><input id="oLat" placeholder="4.450123"></div><div><label for="oLon">LONGITUD</label><input id="oLon" placeholder="-75.230456"></div>
+    <div><label for="oAlt">ALT. TERRENO m</label><input id="oAlt" placeholder="35"></div><div><label for="oH">ALT. ANTENA m</label><input id="oH" placeholder="20"></div></div></div>
+<div class="pn"><div class="pt"><span>🎯 PUNTO DESTINO</span></div><div class="g2">
+    <div><label for="dLat">LATITUD</label><input id="dLat" placeholder="4.720321"></div><div><label for="dLon">LONGITUD</label><input id="dLon" placeholder="-75.510654"></div>
+    <div><label for="dAlt">ALT. TERRENO m</label><input id="dAlt" placeholder="820"></div><div><label for="dH">ALT. ANTENA m</label><input id="dH" placeholder="20"></div></div></div>
+<div class="acts"><button id="gps">⌖ GPS</button><button id="calc">CALCULAR</button><button id="openCam">📷 CÁMARA</button><button id="twBtn" class="warnb">🗼 TORRE</button></div>
+<div class="msg" id="err"></div>
+<div class="card warn" id="proto" hidden><b style="color:var(--warn)">Archivo abierto sin contexto seguro.</b> Chrome bloquea GPS, brújula y cámara cuando abres el archivo directamente. Solución 100 % local (sin internet ni servidores externos): instala Termux, ve a la carpeta del archivo y ejecuta <code>python -m http.server 8000</code>; luego abre <code>http://localhost:8000/alineador_antenas.html</code> en Chrome.</div>
+<div class="tiny">⚠️ La orientación del teléfono es solo una guía inicial. La alineación final debe hacerse con los parámetros reales del radioenlace y el nivel de señal.</div>
+</div>
+<div class="tab" id="tabAj"><div class="chips" id="chips"></div><section class="card" id="cmpCard">
+  <h2>🧭 Brújula</h2>
+  <div id="cmpWrap">
+    <svg viewBox="0 0 200 200" aria-label="Brújula">
+      <polygon points="100,1 93,14 107,14" fill="var(--ac)"/>
+      <g id="dial">
+        <circle cx="100" cy="100" r="84" fill="none" stroke="var(--bd)" stroke-width="2"/>
+        <g id="ticks"></g>
+        <text x="100" y="40" text-anchor="middle" fill="var(--bad)" font-weight="800" font-size="16">N</text>
+        <text x="166" y="106" text-anchor="middle" fill="var(--mut)" font-weight="700" font-size="14">E</text>
+        <text x="100" y="172" text-anchor="middle" fill="var(--mut)" font-weight="700" font-size="14">S</text>
+        <text x="34" y="106" text-anchor="middle" fill="var(--mut)" font-weight="700" font-size="14">O</text>
+        <g id="tm"><polygon points="100,10 90,32 110,32" fill="var(--warn)"/></g>
+      </g>
+      <g id="arr"><polygon id="arrP" points="100,58 86,104 100,95 114,104" fill="var(--warn)"/><circle cx="100" cy="100" r="5" fill="var(--tx)"/></g>
+    </svg>
+  </div>
+  <div class="kv">
+    <div><small>AZIMUT OBJETIVO</small><b id="kAz">—</b></div>
+    <div><small>RUMBO ACTUAL</small><b id="kHd">—</b></div>
+  </div>
+  <div class="corr" id="corr">Activa la brújula</div>
+  <label for="nmode">Referencia del norte</label>
+  <select id="nmode"><option value="real">Norte real (aplica la declinación)</option><option value="mag">Norte magnético (sin declinación)</option></select>
+  <label for="decl">Declinación magnética (°, Este +, Oeste −). Colombia ≈ −7</label>
+  <input id="decl" value="-7">
+  <label style="margin-top:12px">Ajuste fino en grados (se lee a partir de la declinación base)</label>
+  <div class="tuner" id="tnCard"></div>
+  <div class="sm" id="corrTxt"></div>
+  <div class="row"><button id="cSave">💾 GUARDAR AJUSTE</button><button class="alt" id="cZero">VOLVER A 0°</button></div>
+  <div id="ajList"></div>
+  <div class="sm" id="refTxt" style="text-align:left"></div>
+  <details id="dg"><summary>Diagnóstico de brújula</summary><pre id="diag" style="font-size:12px;white-space:pre-wrap;color:var(--mut)">Mueve el teléfono para ver datos…</pre></details>
+  <button class="alt" id="startOri">ACTIVAR BRÚJULA</button>
+  <div id="oriMsg" class="msg" style="color:var(--mut)"></div>
+</section></div>
+<div class="tab" id="tabSig"><section class="card">
+  <h2>🔬 Alineación fina (giroscopio)</h2>
+  <div hidden>
+  <div class="rssi"><button class="alt step" id="rM">−</button><input id="rssi" placeholder="-65" aria-label="RSSI en dBm"><button class="alt step" id="rP">+</button></div>
+  <div class="sm">RSSI en dBm · escribe el valor (con o sin signo) o usa − / +<br><b id="radSt"></b></div>
+  <div id="meter"><i id="mBar"></i></div>
+  <div class="corr" id="sigTxt" style="font-size:24px">Ingresa el RSSI</div>
+  <div class="sm" id="trend"></div>
+  <div class="sm" id="best"></div>
+  <div class="corr" id="guide" style="font-size:19px"></div>
+  <div class="row"><button class="alt" id="snd">🔇 SONIDO: APAGADO</button><button class="alt" id="clr">BORRAR BARRIDO</button></div>
+  </div>
+  <button class="alt" id="fineBtn">🔬 MODO FINO (GIROSCOPIO): APAGADO</button>
+  <div id="finePanel" hidden>
+    <div class="sm" style="text-align:left">Sujeta el teléfono a la antena, vertical y con la cámara trasera mirando hacia donde apunta el plato. Con la antena en su posición actual pulsa FIJAR 0°. Luego muévela despacio y lee en pantalla cuántos grados has girado. Este modo mide solo cuánto giras, no hacia dónde está el norte, así que el metal no lo desvía. Puede ir derivando poco a poco: si tardas mucho, vuelve a fijar 0°.</div>
+    <div class="corr" id="relAng" style="font-size:30px">—</div>
+    <button id="fineZero">FIJAR 0° AQUÍ</button>
+  </div>
+  <div hidden><label for="vol">Volumen del pitido</label>
+  <input type="range" id="vol" min="5" max="100" value="70" style="padding:0;border:0;background:none">
+  <div class="sm">Más agudo y más rápido = mejor señal.</div>
+  <details><summary>Parámetros del radio (opcional)</summary>
+    <div class="row">
+      <div><label for="snr">SNR (dB)</label><input id="snr"></div>
+      <div><label for="fMHz">Frecuencia (MHz)</label><input id="fMHz" placeholder="5800"></div>
+      <div><label for="chn">Canal</label><input id="chn"></div>
+      <div><label for="ptx">Potencia (dBm)</label><input id="ptx"></div>
+      <div><label for="mdl">Modelo de radio</label><input id="mdl" list="mdls"><datalist id="mdls"></datalist></div>
+      <div><label for="pol">Polarización</label><select id="pol"><option>Dual (H+V)</option><option>Horizontal</option><option>Vertical</option></select></div>
+      <div><label for="bw">Ancho de canal (MHz)</label><input id="bw" placeholder="20"></div>
+    </div>
+    <div class="sm" id="fspl"></div>
+  </details></div>
+</section></div>
+<div class="tab" id="tabTer"><pre id="datosEnl" class="pn" style="font:600 11px/1.5 var(--mono);white-space:pre-wrap;margin:0 0 6px"></pre><section class="card" id="resCard">
+  <h2>Resultados</h2>
+  <div class="res">
+    <div><small>📏 DISTANCIA</small><b id="rD">—</b></div>
+    <div><small>🧭 AZIMUT</small><b id="rAz">—</b></div>
+    <div><small>⬆️ ELEVACIÓN</small><b id="rEl">—</b><small id="rElG"></small></div>
+    <div><small>⛰️ DIF. ALTURA</small><b id="rDh">—</b></div>
+    <div class="wide"><small>DIRECCIÓN</small><b id="rDir">—</b></div>
+    <div class="wide"><small>COORDENADAS USADAS EN EL CÁLCULO</small><b id="rCo" style="font-size:13px;font-weight:500">—</b></div>
+    <div class="wide"><small>ALTURAS EFECTIVAS (terreno + antena)</small><b id="rHt" style="font-size:15px;font-weight:600">—</b></div>
+  </div>
+  <button class="alt" id="pfBtn">🏔️ VER PERFIL DEL TERRENO Y OBSTÁCULOS</button>
+  <div class="sm" id="pfMsg" style="text-align:left"></div>
+  <div id="pfBox" hidden>
+    <div class="corr" id="pfVer" style="font-size:18px"></div>
+    <svg id="pfSvg" viewBox="0 0 360 210" style="margin-top:8px;border-radius:10px;background:var(--bg)"></svg>
+    <div class="sm" id="pfTxt" style="text-align:left;line-height:1.5"></div>
+    <div class="sm" style="text-align:left">Terreno: Copernicus DEM (90 m) vía Open-Meteo.com. No incluye árboles ni edificios, y puede pasar por alto una cresta angosta. Es una guía, no reemplaza un estudio de enlace.</div>
+  </div>
+</section></div>
+<div class="tab" id="tabLnk"><section class="card">
+  <h2>💾 Enlaces guardados</h2>
+  <label for="lkName">Nombre del enlace</label>
+  <input id="lkName" placeholder="JUNTAS → SAN SEBASTIÁN">
+  <div class="row">
+    <div><label for="lkA">Sitio A (donde estoy)</label><input id="lkA" placeholder="Juntas"></div>
+    <div><label for="lkB">Sitio B (destino)</label><input id="lkB" placeholder="San Sebastián"></div>
+  </div>
+  <button id="lkSave">GUARDAR ENLACE</button>
+  <div class="sm" id="lkMsg"></div>
+  <div id="lkList"></div>
+  <div class="row" style="margin-top:12px">
+    <button class="alt" id="lkCsv">EXPORTAR CSV</button><button class="alt" id="lkShareAll">COMPARTIR TODO</button>
+    <button class="alt" id="lkBack">RESPALDO (JSON)</button><button class="alt" id="lkRest">RESTAURAR</button>
+  </div>
+  <input type="file" id="lkFile" accept=".json,application/json" hidden>
+  <div class="sm">Se guarda en este navegador y en esta dirección. Haz respaldo de vez en cuando.</div>
+</section></div>
+</main>
+<nav id="nav"><button class="on" data-t="tabNav">⌖ NAV</button><button data-t="tabAj">🧭 AJUSTE</button><button data-t="tabSig">🔬 FINO</button><button data-t="tabTer">⛰️ TERRENO</button><button data-t="tabLnk">💾 ENLACES</button></nav>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="tw">
+  <svg id="svI" viewBox="0 0 200 118" style="display:none"></svg>
+  <div id="twTop"><div id="twMid"><div class="gl" id="lR"></div><div class="gl" id="tGuide"></div></div></div>
+  <div id="twGauges">
+    <div class="gbox"><svg id="svC" viewBox="0 0 200 200"></svg><div class="gcap" id="cCap">—</div></div>
+    <div class="gbox" id="twRs"><svg id="svR" viewBox="0 10 200 100"></svg><div class="rbig" id="rBig">—</div><div class="rinfo" id="rInfo"></div><svg id="rSpark" viewBox="0 0 100 24" preserveAspectRatio="none"></svg><div class="rbtn"><button class="step" id="tM">−</button><input id="tRssi" placeholder="-65" aria-label="RSSI en dBm"><button class="step" id="tP">+</button></div><div class="rsrc" id="rSrc"></div></div>
+  </div>
+  <div class="col" id="twL"><div class="tile"><small>AZ OBJ</small><b id="vAz">—</b></div><div class="tile"><small>RUMBO</small><b id="vHd">—</b></div><div class="tile"><small>GIRAR</small><b id="vTurn">—</b></div><div class="tile"><small>DIST</small><b id="vDist">—</b></div></div>
+  <div class="col" id="twR"><div class="tile"><small>ELEV OBJ</small><b id="vEl">—</b></div><div class="tile"><small>INCLIN</small><b id="vPi">—</b></div><div class="tile"><small>CORREG</small><b id="vTilt">—</b></div><div class="tile"><small>Δ ALT</small><b id="vDh">—</b></div></div>
+  <div id="twAtt"><svg id="attSvg" viewBox="0 0 200 200"></svg><div id="attTxt"><small>INCLINACIÓN</small><b id="attV">—</b><span id="attC"></span></div></div>
+  <div id="twB" class="g">
+    <div id="twMapT"><div id="mapTiles"></div><svg id="mapOv"></svg><div id="mapInfo"></div><div id="mapMsg"></div><div id="mapAttr"></div><button id="mapLayer">🛰</button><button id="mapEarth">🌍</button></div>
+    <div class="zr"><button id="tZo">🔍−</button><span id="tzV">×1.0</span><button id="tZi">🔍+</button></div>
+    <div class="tb"><button id="tSnd">🔇 SONIDO</button><button id="tClr">BORRAR</button><button id="tX">✕ SALIR</button></div>
+  </div>
+</div>
+<div id="cfgP" style="display:none;position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;padding:14px">
+ <div style="max-width:560px;margin:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 style="margin:0">⚙️ Permisos</h2><button class="icon alt" id="cfgX">✕</button></div>
+  <div class="card" id="pList">Consultando…</div>
+  <div class="row"><button id="pLoc">PEDIR UBICACIÓN</button><button id="pCam">PEDIR CÁMARA</button></div>
+  <button id="pOri">ACTIVAR BRÚJULA</button>
+  <div class="msg" id="pMsg" style="color:var(--warn)"></div>
+  <div class="card warn" style="margin-top:12px">
+   <b style="color:var(--warn)">Si algo sale BLOQUEADO</b>, el navegador no deja que la página lo cambie; hay que hacerlo a mano:<br>
+   1) Toca el candado junto a la dirección &gt; Permisos y pon Cámara, Ubicación y Sensores en Permitir.<br>
+   2) Chrome &gt; Ajustes &gt; Configuración de sitios: quita el sitio de Bloqueados en Cámara, Ubicación y Sensores de movimiento.<br>
+   3) Ajustes de Android &gt; Apps &gt; Chrome &gt; Permisos: Cámara y Ubicación en Permitir.<br>
+   4) Recarga la página y vuelve a pulsar el botón del permiso.<br><br>
+   Si aparece "Contexto seguro ✗", ningún permiso funcionará: abre la página con http://localhost (Termux).
+  </div>
+ </div>
+</div>
+<div id="cam">
+  <video id="vid" playsinline muted autoplay></video>
+  <div id="hor"><span>horizonte</span></div>
+  <div id="cross"></div>
+  <div id="aimDot"></div>
+  <div id="tline"><span></span></div>
+  <div id="tgt"><svg class="ret" viewBox="0 0 40 40" width="38" height="38"><circle cx="20" cy="20" r="13" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="20" cy="20" r="3.5" fill="currentColor"/><path d="M20 1v9M20 30v9M1 20h9M30 20h9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><div class="arw" style="display:none;font-size:34px;line-height:1">▶</div><div id="tTxt" style="font-weight:800;font-size:13px"></div></div>
+  <div class="ov" id="top"><div id="camHead" style="font-size:18px;font-weight:700"></div></div>
+  <div id="camctl"><button id="closeCam">✕</button><button id="zIn">🔍+</button><span id="zTxt">×1.0</span><button id="zOut">🔍−</button></div>
+  <div id="tune"><div class="tuner"></div><button id="tuSave">💾 GUARDAR AJUSTE</button></div>
+  <div id="fovbox">Campo de visión del lado corto de la pantalla: <span id="fovV">55</span>° (ajústalo hasta que un objeto lejano coincida)<input type="range" id="fov" min="35" max="85" value="55"></div>
+  <div class="ov" id="bot"><div id="msg"></div><div id="msg2"></div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id), D2R=Math.PI/180, R=6371000, TOL=3;
+let T=null, hRaw=null, hSm=null, pitch=null, watchId=null, stream=null, oriOn=false, gotAbs=false, wl=null, wasAligned=false, raf=false;
+const num=v=>{v=String(v).trim().replace(',','.');return v===''?NaN:parseFloat(v)};
+const wrap=a=>((a+540)%360)-180;
+const NAMES=['Norte','Nor-noreste','Noreste','Este-noreste','Este','Este-sureste','Sureste','Sur-sureste','Sur','Sur-suroeste','Suroeste','Oeste-suroeste','Oeste','Oeste-noroeste','Noroeste','Nor-noroeste'];
+const fmtD=m=>m>=1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m';
+
+// ---------- Panel de permisos ----------
+async function permState(n){try{return (await navigator.permissions.query({name:n})).state}catch(e){return null}}
+async function showCfg(){
+  $('cfgP').style.display='block';
+  const T_={granted:['✓ Permitido','var(--ok)'],prompt:['Se preguntará al usarlo','var(--warn)'],denied:['✗ BLOQUEADO','var(--bad)'],none:['No se puede consultar','var(--mut)']};
+  const items=[['Contexto seguro',window.isSecureContext?'granted':'denied'],['Ubicación',await permState('geolocation')],['Cámara',await permState('camera')],['Sensores de movimiento',await permState('accelerometer')],['Brújula (magnetómetro)',await permState('magnetometer')],['Datos de brújula recibidos',hRaw!==null?'granted':'denied']];
+  $('pList').innerHTML=items.map(([l,st])=>{const t=T_[st||'none'];return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd)"><span>${l}</span><b style="color:${t[1]}">${t[0]}</b></div>`}).join('');
+}
+$('cfg').onclick=showCfg;$('cfgX').onclick=()=>{$('cfgP').style.display='none'};
+$('pLoc').onclick=()=>{$('pMsg').textContent='Pidiendo ubicación…';if(watchId!==null)stopGps();startGps();setTimeout(()=>{$('pMsg').textContent=$('info').textContent;showCfg()},2500)};
+$('pCam').onclick=async()=>{
+  try{const st=await navigator.mediaDevices.getUserMedia({video:true});st.getTracks().forEach(t=>t.stop());$('pMsg').textContent='Cámara permitida.'}
+  catch(e){$('pMsg').textContent=(e.name==='NotAllowedError'||e.name==='SecurityError')?'Cámara denegada o bloqueada. Sigue los pasos de abajo.':'Error de cámara: '+(e.name||'')+' '+(e.message||'')}
+  showCfg()};
+$('pOri').onclick=async()=>{oriOn=false;await startOri();$('pMsg').textContent='Mueve el teléfono unos segundos…';setTimeout(showCfg,2500)};
+
+// ---------- Diagnóstico ----------
+(function(){
+  const c=(t,ok)=>{const s=document.createElement('span');s.className='chip '+(ok?'ok':'no');s.textContent=(ok?'✓ ':'✗ ')+t;$('chips').appendChild(s)};
+  c('Contexto seguro',window.isSecureContext);
+  c('GPS','geolocation' in navigator);
+  c('Orientación','DeviceOrientationEvent' in window);
+  c('Cámara',!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia));
+  let t='';for(let i=0;i<360;i+=10){const l=i%30===0?8:4;t+=`<line x1="100" y1="${16}" x2="100" y2="${16+l}" stroke="var(--mut)" stroke-width="1.5" transform="rotate(${i} 100 100)"/>`}
+  $('ticks').innerHTML=t;
+})();
+$('theme').onclick=()=>{document.body.classList.toggle('light');$('theme').textContent=document.body.classList.contains('light')?'🌙':'☀️'};
+
+// ---------- GPS ----------
+$('gps').onclick=()=>{if(watchId!==null)stopGps();else startGps()};
+function startGps(){
+  if(!('geolocation' in navigator)){$('info').textContent='Este navegador no tiene geolocalización.';return}
+  $('info').textContent='Buscando señal GPS…';$('gps').textContent='■ GPS';
+  watchId=navigator.geolocation.watchPosition(p=>{
+    const c=p.coords;gpsAcc=c.accuracy;$('oLat').value=c.latitude.toFixed(6);$('oLon').value=c.longitude.toFixed(6);
+    if(c.altitude!=null)$('oAlt').value=Math.round(c.altitude);
+    $('info').textContent=`Precisión horizontal ±${Math.round(c.accuracy)} m`+(c.altitude==null?' · el navegador no entregó altitud: escríbela a mano':'');
+    if(T)calc(true);
+  },e=>{$('info').textContent=e.code===1?'Ubicación denegada o bloqueada (en file:// Chrome la bloquea). Permite Ubicación en el candado del sitio y en Ajustes > Apps > Chrome > Permisos, o escribe las coordenadas a mano.':'No se pudo obtener ubicación ('+e.message+').';stopGps()},
+  {enableHighAccuracy:true,timeout:25000,maximumAge:0});
+}
+function stopGps(){if(watchId!==null)navigator.geolocation.clearWatch(watchId);watchId=null;$('gps').textContent='⌖ GPS'}
+['oLat','oLon','oAlt'].forEach(i=>$(i).addEventListener('input',()=>{if(watchId!==null)stopGps()}));
+// pegar "lat, lon" en un solo campo
+['oLat','dLat'].forEach(id=>$(id).addEventListener('input',e=>{
+  const m=e.target.value.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if(m){e.target.value=m[1];$(id[0]+'Lon').value=m[2]}
+}));
+
+// ---------- Cálculo ----------
+function calc(silent){
+  const la1=num($('oLat').value),lo1=num($('oLon').value),h1=(num($('oAlt').value)||0)+(num($('oH').value)||0);
+  const la2=num($('dLat').value),lo2=num($('dLon').value),h2=(num($('dAlt').value)||0)+(num($('dH').value)||0);
+  const bad=(la,lo)=>isNaN(la)||isNaN(lo)||Math.abs(la)>90||Math.abs(lo)>180;
+  if(bad(la1,lo1)){if(!silent)$('err').textContent='Falta tu ubicación (o es inválida). Pulsa OBTENER MI UBICACIÓN o escríbela.';return}
+  if(bad(la2,lo2)){if(!silent)$('err').textContent='Revisa las coordenadas destino: latitud entre −90 y 90, longitud entre −180 y 180.';return}
+  $('err').textContent='';
+  const p1=la1*D2R,p2=la2*D2R,dl=(lo2-lo1)*D2R;
+  const a=Math.sin((p2-p1)/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  const d=2*R*Math.asin(Math.sqrt(a));
+  const y=Math.sin(dl)*Math.cos(p2),x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  const az=(Math.atan2(y,x)/D2R+360)%360, dh=h2-h1;
+  const elG=d>0?Math.atan2(dh,d)/D2R:0;
+  const el=d>0?elG-(d/(2*R*4/3))/D2R:0; // curvatura terrestre con k=4/3
+  T={d,az,dh,el,elG};
+  $('resCard').hidden=false;$('cmpCard').hidden=false;
+  $('rD').textContent=fmtD(d);$('rAz').textContent=az.toFixed(1)+'°';
+  $('rEl').textContent=(el>=0?'+':'')+el.toFixed(2)+'°';
+  $('rElG').textContent=`geométrica ${elG>=0?'+':''}${elG.toFixed(2)}°`;
+  $('rDh').textContent=(dh>=0?'+':'')+Math.round(dh)+' m';
+  $('rDir').textContent=NAMES[Math.round(az/22.5)%16];
+  $('rCo').textContent=`A: ${la1.toFixed(6)}, ${lo1.toFixed(6)}  →  B: ${la2.toFixed(6)}, ${lo2.toFixed(6)}`;
+  $('rHt').textContent=`A: ${Math.round(h1)} m · B: ${Math.round(h2)} m`+(d>0?` · 10 m de error ≈ ${(Math.atan(10/d)/D2R).toFixed(2)}° de elevación`:'');
+  $('kAz').textContent=Math.round(az)+'°';
+  render();fspl();
+  if(!silent)$('resCard').scrollIntoView({behavior:'smooth'});
+}
+$('calc').onclick=()=>calc(false);
+['oAlt','oH','dAlt','dH'].forEach(i=>$(i).addEventListener('input',()=>{if(T)calc(true)}));
+
+// ---------- Orientación ----------
+async function startOri(){
+  if(oriOn)return;
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+      const r=await DeviceOrientationEvent.requestPermission();
+      if(r!=='granted'){$('oriMsg').textContent='Permiso de sensores denegado.';return}
+    }
+  }catch(e){$('oriMsg').textContent='No se pudo pedir permiso: '+e.message;return}
+  window.addEventListener('deviceorientationabsolute',e=>{gotAbs=true;onOri(e)},true);
+  window.addEventListener('deviceorientation',e=>{if(!gotAbs&&(e.absolute===true||e.webkitCompassHeading!=null))onOri(e)},true);
+  window.addEventListener('deviceorientation',e=>{if(e.absolute!==true)onRel(e)},true);
+  oriOn=true;$('startOri').style.display='none';
+  $('oriMsg').textContent='Esperando datos del sensor… Si no aparecen, revisa que el sitio sea HTTPS. Para calibrar, dibuja un 8 en el aire con el teléfono.';
+  setTimeout(()=>{if(hRaw===null)$('oriMsg').textContent='Sin datos de brújula. Revisa: 1) Chrome > Ajustes > Configuración de sitios > Sensores de movimiento = Permitido; 2) que la página sea localhost/HTTPS; 3) sin ahorro de energía.'},3000);
+}
+$('startOri').onclick=startOri;
+function onOri(e){
+  if(e.alpha==null&&e.webkitCompassHeading==null)return;
+  lastE={a:e.alpha,b:e.beta,g:e.gamma,w:e.webkitCompassHeading,abs:e.absolute};
+  let h=null;
+  if(e.beta!=null&&e.gamma!=null){
+    const b=e.beta*D2R,g=e.gamma*D2R,cB=Math.cos(b),cG=Math.cos(g);
+    pitch=Math.asin(Math.max(-1,Math.min(1,-cB*cG)))/D2R; // elevación hacia donde mira la cámara trasera
+    if(e.alpha!=null){
+      const a=e.alpha*D2R,cA=Math.cos(a),sA=Math.sin(a),sB=Math.sin(b),sG=Math.sin(g);
+      h=Math.atan2(-cA*sG-sA*sB*cG,-sA*sG+cA*sB*cG)/D2R; // rumbo de la parte trasera (cámara), con compensación de inclinación
+      const w=Math.max(0,Math.min(1,(Math.abs(pitch)-45)/20)); // teléfono casi plano: la cámara apunta al suelo/cielo, se usa la parte superior
+      if(w>0){const ht=Math.atan2(-sA*cB,cA*cB)/D2R;h=(h+wrap(ht-h)*w+360)%360}
+    }
+  }
+  if(e.webkitCompassHeading!=null)h=e.webkitCompassHeading;
+  if(h===null)return;
+  hRaw=(h+360)%360;
+  hSm=hSm===null?hRaw:(hSm+wrap(hRaw-hSm)*0.25+360)%360; // suavizado circular
+  if(!raf){raf=true;requestAnimationFrame(()=>{raf=false;render()})}
+}
+let nmode='real',corr=0,zoomV=1,zHw=null,gpsAcc=null,camRes='';
+const heading=()=>hSm===null?null:(hSm+(nmode==='real'?(num($('decl').value)||0):0)+corr+720)%360;
+$('decl').addEventListener('input',render);
+
+// ---------- Render ----------
+let lastE=null;
+function updDiag(){
+  if(!$('dg').open||!lastE)return;
+  const f=v=>v==null?'—':(+v).toFixed(1),hd=heading();
+  $('diag').textContent=`alpha ${f(lastE.a)}  beta ${f(lastE.b)}  gamma ${f(lastE.g)}\nevento absoluto: ${gotAbs?'sí (deviceorientationabsolute)':'no (puede que la brújula sea relativa)'}\nrumbo del sensor (magnético): ${f(hRaw)}°\ndeclinación aplicada: ${nmode==='real'?f(num($('decl').value)||0)+'°':'no (modo magnético)'} · corrección ${f(corr)}°\nRUMBO FINAL: ${hd===null?'—':hd.toFixed(1)}°\ninclinación de la cámara: ${f(pitch)}°`+(T?`\nazimut objetivo: ${T.az.toFixed(1)}°`:'');
+}
+function render(){
+  updDiag();
+  if(fine)updRel();
+  if(SW.length)guide();
+  const hd=heading();
+  if(T)$('tm').setAttribute('transform',`rotate(${T.az} 100 100)`);
+  else $('tm').setAttribute('transform','rotate(0 100 100)');
+  if(hd===null){$('kHd').textContent='—';return}
+  $('dial').setAttribute('transform',`rotate(${-hd} 100 100)`);
+  $('kHd').textContent=Math.round(hd)+'°';
+  if(!T){$('arr').setAttribute('transform','rotate(0 100 100)');$('corr').className='corr';$('corr').textContent='Brújula activa · calcula el destino';return}
+  const dl=wrap(T.az-hd), ok=Math.abs(dl)<=TOL;
+  $('arr').setAttribute('transform',`rotate(${dl} 100 100)`);
+  $('arrP').setAttribute('fill',ok?'var(--ok)':'var(--warn)');
+  $('kHd').textContent=Math.round(hd)+'°';
+  const c=$('corr');
+  c.className='corr '+(ok?'ok':'go');
+  c.textContent=ok?'✓ DIRECCIÓN CORRECTA':`DEBE GIRAR: ${Math.round(Math.abs(dl))}° ${dl>0?'DERECHA':'IZQUIERDA'}`;
+  $('oriMsg').textContent=pitch!==null&&Math.abs(pitch)<75&&!$('cam').classList.contains('on')?'Con el teléfono vertical apuntando al horizonte la lectura es más fiable.':'';
+  if($('cam').classList.contains('on'))renderCam(dl,ok);
+}
+function renderCam(dl,ok){
+  const W=$('cam').clientWidth,H=$('cam').clientHeight,fv=+$('fov').value,fpx=(Math.min(W,H)/2)/Math.tan(fv/2*D2R)*zoomV;
+  $('fovV').textContent=fv;
+  $('camHead').innerHTML=`🎯 ANTENA DESTINO · ${T.az.toFixed(1)}° · ${fmtD(T.d)}<br><span style="font-size:14px;font-weight:500">rumbo actual ${Math.round(heading())}° · elevación objetivo ${T.el>=0?'+':''}${T.el.toFixed(1)}° · 📷 ${camRes} · zoom ×${zoomV.toFixed(1)}</span>`;
+  const cl80=v=>Math.max(-80,Math.min(80,v)), x=fpx*Math.tan(cl80(dl)*D2R)/W, tg=$('tgt');
+  let left=50+x*100, edge=false;
+  if(Math.abs(x)>0.45){left=x>0?90:10;edge=true}
+  let dv=pitch===null?0:T.el-pitch, top=50-fpx*Math.tan(cl80(dv)*D2R)/H*100;
+  top=Math.max(18,Math.min(76,top));
+  const er=Math.hypot(dl,dv),col=er<=TOL?'#2fd16b':er<=10?'#f5a524':'#ff5d5d';
+  tg.style.left=left+'%';tg.style.top=top+'%';tg.style.color=col;tg.className=er<=TOL?'ok':'';
+  tg.querySelector('.ret').style.display=edge?'none':'block';
+  const aw=tg.querySelector('.arw');aw.style.display=edge?'block':'none';aw.textContent=x>0?'▶':'◀';
+  $('cross').style.borderColor=er<=TOL?'#2fd16b':'#fff8';
+  $('tTxt').textContent=edge?'':Math.round(T.az)+'°';
+  if(pitch!==null){const hy=50+fpx*Math.tan(cl80(pitch)*D2R)/H*100;$('hor').style.top=hy+'%';$('hor').style.display=(hy>-5&&hy<105)?'block':'none'}
+  const m=$('msg'),m2=$('msg2');
+  if(ok){m.textContent='✓ ALINEACIÓN INICIAL';m.style.color='var(--ok)';
+    if(!wasAligned&&navigator.vibrate)navigator.vibrate(80)}
+  else{m.style.color='#fff';const n=Math.round(Math.abs(dl));m.textContent=dl>0?`GIRAR ${n}° A LA DERECHA →`:`← GIRAR ${n}° A LA IZQUIERDA`}
+  wasAligned=ok;
+  m2.textContent=pitch===null?'':Math.abs(dv)<=TOL?'Inclinación correcta':dv>0?`↑ INCLINAR ${Math.abs(dv).toFixed(0)}° HACIA ARRIBA`:`↓ INCLINAR ${Math.abs(dv).toFixed(0)}° HACIA ABAJO`;
+}
+$('fov').addEventListener('input',render);
+
+// ---------- Cámara ----------
+$('openCam').onclick=async()=>{
+  if(!T){calc(false);if(!T){window.scrollTo({top:0,behavior:'smooth'});return}}
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){alert('La cámara requiere HTTPS o localhost. Mira las instrucciones de prueba.');return}
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}},audio:false});
+    const tr0=stream.getVideoTracks()[0];
+    try{const c0=tr0.getCapabilities?tr0.getCapabilities():{};await tr0.applyConstraints({width:{ideal:(c0.width&&c0.width.max)||3840},height:{ideal:(c0.height&&c0.height.max)||2160}})}catch(e){}
+    try{await tr0.applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}
+    try{const st=tr0.getSettings();camRes=st.width+'×'+st.height}catch(e){}
+    $('vid').srcObject=stream;$('cam').classList.add('on');initZoom();paintTuners();
+    await startOri();
+    try{wl=await navigator.wakeLock.request('screen')}catch(e){}
+    render();
+  }catch(e){
+    const r=e.name==='NotAllowedError'||e.name==='SecurityError'
+     ?'Acceso a la cámara denegado.\n\n1) Toca el candado/ícono junto a la dirección > Permisos > Cámara > Permitir.\n2) Si no aparece: Chrome > Ajustes > Configuración de sitios > Cámara, y quita el sitio de Bloqueados.\n3) Ajustes de Android > Apps > Chrome > Permisos > Cámara > Permitir.\n4) Recarga la página.\n\nSi abriste el archivo directamente (file://), usa http://localhost con Termux.'
+     :e.name==='NotFoundError'?'No se encontró cámara.':e.name==='NotReadableError'?'La cámara está en uso por otra app. Ciérrala e intenta de nuevo.':'No se pudo abrir la cámara: '+e.name+' '+e.message;
+    alert(r);
+  }
+};
+function applyZoom(){
+  $('zTxt').textContent='×'+zoomV.toFixed(1);
+  const v=$('vid');
+  if(zHw){v.style.transform='';stream.getVideoTracks()[0].applyConstraints({advanced:[{zoom:zoomV}]}).catch(()=>{zHw=null;applyZoom()})}
+  else v.style.transform=zoomV>1?`scale(${zoomV})`:'';
+  render();
+}
+function initZoom(){
+  zoomV=1;zHw=null;
+  try{const t=stream.getVideoTracks()[0],c=t.getCapabilities?t.getCapabilities():{};if(c.zoom&&c.zoom.max>1)zHw={max:c.zoom.max}}catch(e){}
+  applyZoom();
+}
+const zStep=d=>{zoomV=Math.max(1,Math.min(zHw?zHw.max:8,Math.round((zoomV+d)*10)/10));applyZoom()};
+$('zIn').onclick=()=>zStep(0.5);$('zOut').onclick=()=>zStep(-0.5);
+$('closeCam').onclick=()=>{
+    $('cam').classList.remove('on');
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  if(wl){wl.release();wl=null}
+};
+
+// ---------- Fase 3: señal (RSSI) + pitido ----------
+const SW=[],RH=[]; let lastR=null, lt=null, aCtx=null, sndOn=false, beepT=null;
+const rssiVal=()=>{let v=num($('rssi').value);if(isNaN(v))return NaN;if(v>0)v=-v;return(v<-120||v>-20)?NaN:v};
+const sigClass=r=>r>=-55?['🟢🟢','EXCELENTE','var(--ok)']:r>=-62?['🟢','BUENA','var(--ok)']:r>=-69?['🟠','REGULAR','var(--warn)']:['🔴','DÉBIL','var(--bad)'];
+function showR(){
+  const r=rssiVal();
+  if(isNaN(r)){$('sigTxt').textContent='Ingresa el RSSI';$('sigTxt').style.color='';$('mBar').style.width='0';return}
+  const c=sigClass(r),snr=num($('snr').value);
+  $('mBar').style.width=Math.max(0,Math.min(100,(r+95)/50*100))+'%';$('mBar').style.background=c[2];
+  $('sigTxt').style.color=c[2];$('sigTxt').textContent=`${c[0]} ${r} dBm · ${c[1]}`+(isNaN(snr)?'':` · SNR ${snr} dB`);
+}
+function logR(){
+  const r=rssiVal();if(isNaN(r))return;
+  const t=$('trend');
+  if(lastR!==null&&r!==lastR){const d=r-lastR;t.textContent=`${d>0?'▲ MEJORÓ':'▼ EMPEORÓ'} ${Math.abs(d)} dB respecto a la lectura anterior`;t.style.color=d>0?'var(--ok)':'var(--bad)'}
+  lastR=r;RH.push(r);if(RH.length>60)RH.shift();
+  const hd=curAng();
+  SW.push({r,h:hd,p:pitch});if(SW.length>1200)SW.shift();
+  guide();
+}
+function setR(v){$('rssi').value=v;showR();logR()}
+$('rM').onclick=()=>{const r=rssiVal();setR(isNaN(r)?-70:Math.max(-120,r-1))};
+$('rP').onclick=()=>{const r=rssiVal();setR(isNaN(r)?-70:Math.min(-20,r+1))};
+$('rssi').addEventListener('input',()=>{showR();clearTimeout(lt);lt=setTimeout(logR,700)});
+$('snr').addEventListener('input',showR);
+// --- Lectura automática del radio (servidor_radio.py -> /rssi) ---
+const RAD={live:false,msg:'⌨ MANUAL'};
+async function pollRadio(){
+  try{
+    const j=await(await fetch('/rssi',{cache:'no-store'})).json();
+    if(j.ok&&j.rssi!=null&&Date.now()/1000-j.t<4){
+      RAD.live=true;RAD.msg='📡 RADIO EN VIVO';
+      const ae=document.activeElement;
+      if(ae!==$('rssi')&&ae!==$('tRssi')&&ae!==$('hRssi'))setR(Math.round(j.rssi*10)/10);
+    }else{RAD.live=false;RAD.msg='⚠ '+(j.error||'radio sin datos')}
+  }catch(e){RAD.live=false;RAD.msg='⌨ MANUAL (sin servidor del radio)'}
+  if($('radSt')){$('radSt').textContent=RAD.msg;$('radSt').style.color=RAD.live?'var(--ok)':'var(--warn)'}
+  setTimeout(pollRadio,500);
+}
+function rdUi(r){
+  const n=RH.length,c=isNaN(r)?null:sigClass(r),e=$('rBig');
+  e.textContent=isNaN(r)?'—':r.toFixed(1).replace('.0','')+' dBm';e.style.color=c?c[2]:'';
+  let info='';
+  if(SW.length){const mx=Math.max(...SW.map(x=>x.r));info='MÁX '+mx+(isNaN(r)?'':' ('+(r-mx>=0?'+':'')+(r-mx).toFixed(1)+')')}
+  if(n>=4){const k=Math.min(3,Math.floor(n/2)),av=a=>a.reduce((x,y)=>x+y,0)/a.length,d=av(RH.slice(-k))-av(RH.slice(-2*k,-k));info+='\n'+(Math.abs(d)<0.3?'● estable':(d>0?'▲ mejora ':'▼ empeora ')+Math.abs(d).toFixed(1)+' dB')}
+  $('rInfo').textContent=info;
+  if(n>1){const lo=Math.min(-90,...RH),hi=Math.max(-45,...RH);$('rSpark').innerHTML='<polyline fill="none" style="stroke:'+(c?c[2]:'#fff')+';stroke-width:1.8;vector-effect:non-scaling-stroke" points="'+RH.map((v,i)=>(i*100/(n-1)).toFixed(1)+','+(22-20*(v-lo)/(hi-lo)).toFixed(1)).join(' ')+'"/>'}else $('rSpark').innerHTML='';
+  $('rSrc').textContent=RAD.msg;$('rSrc').style.color=RAD.live?'#2fd16b':'#ffb02e';
+}
+let fine=false,relRef=null,hRel=null;
+const relAng=()=>(relRef===null||hRel===null)?null:wrap(hRel-relRef);
+const curAng=()=>fine?relAng():heading();
+function onRel(e){
+  if(e.alpha==null||e.beta==null||e.gamma==null)return;
+  const a=e.alpha*D2R,b=e.beta*D2R,g=e.gamma*D2R,cA=Math.cos(a),sA=Math.sin(a),cB=Math.cos(b),sB=Math.sin(b),cG=Math.cos(g),sG=Math.sin(g);
+  const pt=Math.asin(Math.max(-1,Math.min(1,-cB*cG)))/D2R;
+  let h=Math.atan2(-cA*sG-sA*sB*cG,-sA*sG+cA*sB*cG)/D2R;
+  const w=Math.max(0,Math.min(1,(Math.abs(pt)-45)/20));
+  if(w>0){const ht=Math.atan2(-sA*cB,cA*cB)/D2R;h=(h+wrap(ht-h)*w+360)%360}
+  h=(h+360)%360;
+  hRel=hRel===null?h:(hRel+wrap(h-hRel)*0.35+360)%360;
+  if(!raf){raf=true;requestAnimationFrame(()=>{raf=false;render()})}
+}
+function updRel(){
+  const a=relAng();
+  $('relAng').textContent=hRel===null?'Sin datos del giroscopio':a===null?'Pulsa FIJAR 0°':(a>0?'+':'')+a.toFixed(1)+'° '+(Math.abs(a)<0.05?'':a>0?'(a la derecha)':'(a la izquierda)');
+}
+function guide(){
+  const g=$('guide'),b=$('best'),hs=SW.filter(s=>s.h!==null);
+  const fmt=a=>fine?(a>0?'+':'')+a.toFixed(1)+'°':Math.round(a)+'°';
+  if(!hs.length){b.textContent=SW.length?(fine?'Pulsa FIJAR 0° para registrar el giro de cada lectura.':'Activa la brújula para registrar el rumbo de cada lectura.'):'';g.textContent='';return}
+  let best=hs[0];for(const s of hs)if(s.r>=best.r)best=s;
+  b.textContent=`Mejor lectura: ${best.r} dBm a ${fmt(best.h)}`+(best.p!==null?` · inclinación ${best.p.toFixed(0)}°`:'')+` · ${hs.length} lecturas`;
+  const hd=curAng();if(hd===null){g.textContent='';return}
+  const d=wrap(best.h-hd),tol=fine?0.7:2;
+  if(Math.abs(d)<=tol){g.className='corr ok';g.textContent='✓ ESTÁS EN LA MEJOR POSICIÓN'}
+  else{g.className='corr go';g.textContent=`MEJORAR EN ESTA DIRECCIÓN: ${Math.abs(d).toFixed(fine?1:0)}° ${d>0?'DERECHA':'IZQUIERDA'}`}
+}
+$('fineBtn').onclick=()=>{
+  fine=!fine;relRef=null;SW.length=0;lastR=null;
+  $('finePanel').hidden=!fine;$('fineBtn').textContent='🔬 MODO FINO (GIROSCOPIO): '+(fine?'ENCENDIDO':'APAGADO');
+  $('trend').textContent='';$('best').textContent='';$('guide').textContent='';
+  if(fine&&!oriOn)startOri();
+  render();
+};
+$('fineZero').onclick=()=>{
+  if(hRel===null){$('relAng').textContent='Sin datos del giroscopio';return}
+  relRef=hRel;SW.length=0;lastR=null;$('trend').textContent='';$('best').textContent='';$('guide').textContent='';render();
+};
+$('clr').onclick=()=>{SW.length=0;RH.length=0;lastR=null;$('trend').textContent='';$('best').textContent='';$('guide').textContent=''};
+function fspl(){
+  let f=num($('fMHz').value);if(f>0&&f<100)f*=1000;
+  $('fspl').textContent=(T&&f>0)?`Pérdida en espacio libre a ${fmtD(T.d)}: ${(20*Math.log10(T.d/1000)+20*Math.log10(f)+32.44).toFixed(1)} dB`:'';
+}
+$('fMHz').addEventListener('input',fspl);
+// Pitido: tono más agudo y más rápido cuanto mejor es la señal
+$('snd').onclick=()=>{
+  if(sndOn){sndOn=false;clearTimeout(beepT);$('snd').textContent='🔇 SONIDO: APAGADO';return}
+  try{aCtx=aCtx||new(window.AudioContext||window.webkitAudioContext)();aCtx.resume()}catch(e){alert('Este navegador no permite audio.');return}
+  sndOn=true;$('snd').textContent='🔊 SONIDO: ENCENDIDO';loop();
+};
+function loop(){
+  clearTimeout(beepT);if(!sndOn)return;
+  const r=rssiVal();
+  if(isNaN(r)){beepT=setTimeout(loop,400);return}
+  const q=Math.max(0,Math.min(1,(r+90)/45)), f=300+q*1300, iv=900-q*780;
+  const o=aCtx.createOscillator(),g=aCtx.createGain(),t=aCtx.currentTime,len=Math.min(0.09,iv/1000*0.6),v=$('vol').value/100*0.4;
+  o.type='square';o.frequency.value=f;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+0.008);g.gain.setValueAtTime(v,t+len-0.012);g.gain.linearRampToValueAtTime(0,t+len);
+  o.connect(g);g.connect(aCtx.destination);o.start(t);o.stop(t+len+0.02);
+  beepT=setTimeout(loop,iv);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(beepT);else if(sndOn)loop()});
+
+if($('radSt')){$('radSt').textContent='⌨ MANUAL';$('radSt').style.color='var(--warn)'}
+// ---------- Modo torre: cámara + relojes ----------
+let twTimer=null;
+const gp=(cx,cy,r,th)=>[cx+r*Math.sin(th*D2R),cy-r*Math.cos(th*D2R)];
+const arcD=(cx,cy,r,a,b)=>{const A=gp(cx,cy,r,a),B=gp(cx,cy,r,b);return `M${A[0].toFixed(1)} ${A[1].toFixed(1)} A${r} ${r} 0 0 1 ${B[0].toFixed(1)} ${B[1].toFixed(1)}`};
+const arcP=(a,b,col,w)=>`<path d="${arcD(100,100,78,a,b)}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
+const rth=v=>-90+(Math.max(-90,Math.min(-45,v))+90)/45*180;
+(function buildHud(){
+  let tk='';for(let i=0;i<360;i+=10)tk+=`<line x1="100" y1="16" x2="100" y2="${16+(i%30===0?9:5)}" stroke="#fff" stroke-opacity=".7" stroke-width="2" transform="rotate(${i} 100 100)"/>`;
+  const tx=(x,y,t,c)=>`<text x="${x}" y="${y}" text-anchor="middle" fill="${c||'#fff'}" font-weight="800" font-size="19">${t}</text>`;
+  $('svC').innerHTML=`<polygon points="100,0 92,14 108,14" fill="#3dd6c6"/><circle cx="100" cy="100" r="84" fill="rgba(0,0,0,.25)" stroke="#fff" stroke-opacity=".4" stroke-width="2"/><g id="tDial">${tk}${tx(100,46,'N','#ff6b6b')}${tx(160,107,'E')}${tx(100,172,'S')}${tx(40,107,'O')}<g id="tTm"><polygon points="100,10 88,34 112,34" fill="#f5a524"/></g></g><g id="tArr"><polygon id="tArrP" points="100,56 84,106 100,96 116,106" fill="#f5a524" stroke="#000" stroke-opacity=".5"/><circle cx="100" cy="100" r="5" fill="#fff"/></g>`;
+  let it='';for(let v=-90;v<=90;v+=30)it+=`<line x1="100" y1="20" x2="100" y2="30" stroke="#fff" stroke-opacity=".8" stroke-width="2" transform="rotate(${v} 100 100)"/>`;
+  $('svI').innerHTML=`<path d="${arcD(100,100,78,-90,90)}" fill="none" stroke="#ffffff44" stroke-width="12"/><path id="iG" d="${arcD(100,100,78,-9,9)}" fill="none" stroke="#2fd16b" stroke-width="14"/>${it}<g id="iN" transform="rotate(0 100 100)"><polygon points="100,26 95,100 105,100" fill="#fff" stroke="#000" stroke-opacity=".5"/></g><circle cx="100" cy="100" r="6" fill="#fff"/>`;
+  $('svR').innerHTML=arcP(-90,rth(-69),'#ff5d5d',14)+arcP(rth(-69),rth(-62),'#f5a524',14)+arcP(rth(-62),rth(-55),'#2fd16b',14)+arcP(rth(-55),90,'#18f0a0',14)+`<g id="rN" transform="rotate(-90 100 100)"><polygon points="100,24 94,100 106,100" fill="#fff" stroke="#000" stroke-opacity=".5"/></g><circle cx="100" cy="100" r="7" fill="#fff"/>`;
+})();
+function renderTower(){
+  const hd=heading(),r=rssiVal(),sg=v=>(v>=0?'+':'')+v;let ok=false,turn='—';
+  if(T){
+    $('vAz').textContent=T.az.toFixed(1)+'°';$('vDist').textContent=fmtD(T.d);$('vEl').textContent=sg(+T.el.toFixed(1))+'°';$('vDh').textContent=sg(Math.round(T.dh))+' m';
+    $('tTm').setAttribute('transform',`rotate(${T.az} 100 100)`);
+    if(hd!==null){
+      const dl=wrap(T.az-hd);ok=Math.abs(dl)<=TOL;
+      $('tDial').setAttribute('transform',`rotate(${-hd} 100 100)`);$('tArr').setAttribute('transform',`rotate(${dl} 100 100)`);
+      $('tArrP').setAttribute('fill',ok?'#2fd16b':'#f5a524');
+      turn=ok?'✓ OK':Math.round(Math.abs(dl))+'° '+(dl>0?'▶':'◀');
+    }
+    if(pitch!==null){
+      const dv=T.el-pEff(),o=Math.abs(dv)<=TOL;
+      $('vTilt').textContent=o?'✓ OK':(dv>0?'↑ ':'↓ ')+Math.abs(dv).toFixed(1)+'°';$('vTilt').style.color=o?'#2fd16b':'#ffb02e';
+    }
+  }
+  if(pitch!==null)$('vPi').textContent=sg(+pitch.toFixed(1))+'°';
+  $('vHd').textContent=hd===null?'—':Math.round(hd)+'°';
+  $('vTurn').textContent=turn;$('vTurn').style.color=ok?'#2fd16b':'#ffb02e';
+  if(document.activeElement!==$('tRssi'))$('tRssi').value=$('rssi').value;
+  if(isNaN(r)){$('rN').setAttribute('transform','rotate(-90 100 100)');$('lR').textContent='Ingresa el RSSI'}
+  else{
+    const c=sigClass(r),snr=num($('snr').value);let tr='';
+    if(SW.length>1){const d=SW[SW.length-1].r-SW[SW.length-2].r;if(d)tr=` · ${d>0?'▲':'▼'}${Math.abs(d)} dB`}
+    $('rN').setAttribute('transform',`rotate(${rth(r)} 100 100)`);
+    $('lR').textContent=`${c[0]} ${r} dBm · ${c[1]}`+(isNaN(snr)?'':` · SNR ${snr}`)+tr;
+  }
+  $('cCap').textContent=hd===null?'—':Math.round(hd)+'°'+(T?' → '+Math.round(T.az)+'°':'');
+  rdUi(r);
+  $('tGuide').textContent=$('guide').textContent;$('tGuide').style.color=$('guide').className.includes('ok')?'#2fd16b':'#f5a524';
+  $('tSnd').textContent=(sndOn?'🔊':'🔇')+' SONIDO';$('tzV').textContent='×'+zoomV.toFixed(1);
+  drawMap(hd,ok);layoutAtt();drawAtt();updTline();
+}
+$('twBtn').onclick=async()=>{
+  $('cam').classList.add('tower');
+  await $('openCam').onclick();
+  $('tw').classList.toggle('cam',$('cam').classList.contains('on'));
+  $('tw').classList.add('on');renderTower();clearInterval(twTimer);twTimer=setInterval(renderTower,150);
+  try{await document.documentElement.requestFullscreen()}catch(e){}
+  if(!oriOn)startOri();
+};
+$('tX').onclick=()=>{
+  $('tw').classList.remove('on');clearInterval(twTimer);
+  $('cam').classList.remove('tower');
+  if($('cam').classList.contains('on'))$('closeCam').onclick();
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+};
+$('tM').onclick=()=>$('rM').onclick();
+$('tP').onclick=()=>$('rP').onclick();
+$('tRssi').addEventListener('input',()=>{$('rssi').value=$('tRssi').value;$('rssi').dispatchEvent(new Event('input'))});
+$('tSnd').onclick=()=>$('snd').onclick();
+$('tClr').onclick=()=>$('clr').onclick();
+
+// ---------- Fase 4: guardar enlaces ----------
+const LS='alineador_enlaces_v1'; let curId=null;
+const loadL=()=>{try{return JSON.parse(localStorage.getItem(LS)||'[]')}catch(e){return[]}};
+const saveL=a=>{try{localStorage.setItem(LS,JSON.stringify(a));return true}catch(e){$('lkMsg').textContent='No se pudo guardar: el navegador bloquea el almacenamiento.';return false}};
+const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p2=n=>String(n).padStart(2,'0');
+const fdate=iso=>{const d=new Date(iso);return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`};
+const sg=v=>(v>=0?'+':'')+v;
+function collect(){
+  const r=rssiVal();
+  return {id:curId||Date.now().toString(36),name:$('lkName').value.trim()||'Sin nombre',siteA:$('lkA').value.trim(),siteB:$('lkB').value.trim(),
+    oLat:$('oLat').value,oLon:$('oLon').value,oAlt:$('oAlt').value,dLat:$('dLat').value,dLon:$('dLon').value,dAlt:$('dAlt').value,oH:$('oH').value,dH:$('dH').value,
+    d:T.d,az:T.az,el:T.el,dh:T.dh,rssi:isNaN(r)?null:r,snr:$('snr').value,f:$('fMHz').value,ch:$('chn').value,ptx:$('ptx').value,
+    mdl:$('mdl').value,pol:$('pol').value,bw:$('bw').value,date:new Date().toISOString()};
+}
+function report(it){
+  const L=[it.name];
+  if(it.siteA||it.siteB)L.push(`Sitios: ${it.siteA||'?'} → ${it.siteB||'?'}`);
+  L.push(`Distancia: ${(it.d/1000).toFixed(1)} km`,`Azimut: ${it.az.toFixed(1)}°`,`Elevación: ${sg(+it.el.toFixed(1))}°`,`Diferencia de altura: ${sg(Math.round(it.dh))} m`);
+  L.push(`RSSI final: ${it.rssi==null?'—':it.rssi+' dBm'}`);
+  if(it.snr)L.push(`SNR: ${it.snr} dB`);
+  const rad=[it.mdl,it.f&&it.f+' MHz',it.ch&&'canal '+it.ch,it.pol,it.bw&&it.bw+' MHz de ancho',it.ptx&&it.ptx+' dBm'].filter(Boolean).join(' · ');
+  if(rad)L.push('Radio: '+rad);
+  L.push(`Origen: ${it.oLat}, ${it.oLon}`+(it.oAlt?`, terreno ${it.oAlt} m`:'')+(it.oH?`, antena a ${it.oH} m del suelo`:''),`Destino: ${it.dLat}, ${it.dLon}`+(it.dAlt?`, terreno ${it.dAlt} m`:'')+(it.dH?`, antena a ${it.dH} m del suelo`:''),`Fecha: ${fdate(it.date)}`);
+  return L.join('\n');
+}
+function renderL(){
+  const a=loadL();
+  $('lkList').innerHTML=a.length?a.map(it=>`<div class="lk"><b>${esc(it.name)}</b>
+    <small>${(it.d/1000).toFixed(1)} km · ${it.az.toFixed(1)}° · ${sg(+it.el.toFixed(1))}° · RSSI ${it.rssi==null?'—':it.rssi+' dBm'}</small>
+    <small>${esc(fdate(it.date))}</small>
+    <div class="r3"><button class="alt" data-a="open" data-i="${esc(it.id)}">ABRIR</button><button class="alt" data-a="share" data-i="${esc(it.id)}">COMPARTIR</button><button class="alt" data-a="del" data-i="${esc(it.id)}">BORRAR</button></div></div>`).join(''):'<div class="sm">Aún no hay enlaces guardados.</div>';
+  $('mdls').innerHTML=[...new Set(a.map(x=>x.mdl).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('');
+  $('lkSave').textContent=curId?'ACTUALIZAR ENLACE':'GUARDAR ENLACE';
+}
+$('lkName').addEventListener('input',()=>{curId=null;$('lkSave').textContent='GUARDAR ENLACE'});
+$('lkSave').onclick=()=>{
+  if(!T){$('lkMsg').textContent='Primero calcula el destino.';return}
+  const it=collect(),a=loadL(),i=a.findIndex(x=>x.id===it.id);
+  if(i>=0)a[i]=it;else a.unshift(it);
+  if(saveL(a)){$('lkMsg').textContent=(i>=0?'Actualizado: ':'Guardado: ')+it.name;curId=it.id;renderL()}
+};
+async function shareText(title,text){
+  try{if(navigator.share){await navigator.share({title,text});return}}catch(e){if(e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text);$('lkMsg').textContent='Reporte copiado. Pégalo en WhatsApp o correo.'}catch(e){prompt('Copia el reporte:',text)}
+}
+$('lkList').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const a=loadL(),it=a.find(x=>x.id===b.dataset.i);if(!it)return;
+  if(b.dataset.a==='share')shareText(it.name,report(it));
+  else if(b.dataset.a==='del'){if(confirm('¿Borrar "'+it.name+'"?')){saveL(a.filter(x=>x.id!==it.id));if(curId===it.id)curId=null;renderL()}}
+  else{
+    const set=(id,v)=>{$(id).value=v==null?'':v};
+    set('lkName',it.name);set('lkA',it.siteA);set('lkB',it.siteB);
+    ['oLat','oLon','oAlt','oH','dLat','dLon','dAlt','dH'].forEach(k=>set(k,it[k]));
+    set('snr',it.snr);set('fMHz',it.f);set('chn',it.ch);set('ptx',it.ptx);set('mdl',it.mdl);set('pol',it.pol);set('bw',it.bw);
+    set('rssi',it.rssi);showR();
+    if(watchId!==null)stopGps();
+    curId=it.id;calc(false);renderL();$('lkMsg').textContent='Abierto: '+it.name;
+  }
+});
+function dl(name,text,type){const u=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+$('lkCsv').onclick=()=>{
+  const a=loadL();if(!a.length){$('lkMsg').textContent='No hay enlaces para exportar.';return}
+  const H=['Nombre','Sitio A','Sitio B','Distancia km','Azimut','Elevación','Dif altura m','RSSI dBm','SNR','Frecuencia MHz','Canal','Potencia dBm','Modelo','Polarización','Ancho MHz','Lat origen','Lon origen','Alt terreno origen','Altura antena origen','Lat destino','Lon destino','Alt terreno destino','Altura antena destino','Fecha'];
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=a.map(i=>[i.name,i.siteA,i.siteB,(i.d/1000).toFixed(2),i.az.toFixed(1),i.el.toFixed(2),Math.round(i.dh),i.rssi,i.snr,i.f,i.ch,i.ptx,i.mdl,i.pol,i.bw,i.oLat,i.oLon,i.oAlt,i.oH,i.dLat,i.dLon,i.dAlt,i.dH,fdate(i.date)].map(q).join(','));
+  dl('enlaces.csv','\ufeff'+[H.map(q).join(','),...rows].join('\n'),'text/csv');
+};
+$('lkShareAll').onclick=()=>{const a=loadL();if(!a.length){$('lkMsg').textContent='No hay enlaces para compartir.';return}shareText('Reporte de enlaces',a.map(report).join('\n\n----------\n\n'))};
+$('lkBack').onclick=()=>{const a=loadL();if(!a.length){$('lkMsg').textContent='No hay enlaces para respaldar.';return}const d=new Date();dl(`respaldo_enlaces_${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}.json`,JSON.stringify(a),'application/json')};
+$('lkRest').onclick=()=>$('lkFile').click();
+$('lkFile').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{const inc=JSON.parse(await f.text());if(!Array.isArray(inc))throw 0;
+    const a=loadL();inc.forEach(it=>{if(it&&it.id&&typeof it.d==='number'){const i=a.findIndex(x=>x.id===it.id);if(i>=0)a[i]=it;else a.push(it)}});
+    a.sort((x,y)=>String(y.date).localeCompare(String(x.date)));
+    if(saveL(a)){renderL();$('lkMsg').textContent='Respaldo restaurado: '+inc.length+' enlaces.'}
+  }catch(err){$('lkMsg').textContent='El archivo no es un respaldo válido.'}
+  e.target.value='';
+});
+renderL();
+
+// ---------- Referencia norte real / magnético y calibración ----------
+function updRef(){
+  const d=num($('decl').value)||0;
+  $('nmode').value=nmode;
+  $('refTxt').textContent=nmode==='real'?(d===0?'Norte REAL, pero la declinación está en 0: la brújula tendrá un error igual a la declinación.':`Norte REAL: base = declinación ${sgn(d)}; el ajuste se suma a esa base.`):'Norte MAGNÉTICO: no se aplica declinación. El azimut calculado es de norte real, así que habrá un error igual a la declinación salvo que el ajuste lo absorba.';
+  $('corrTxt').textContent=`Ajuste actual ${sgn(corr)} (se recuerda solo en este teléfono).`;
+  paintTuners();
+}
+try{const v=localStorage.getItem('alineador_decl');if(v!==null)$('decl').value=v}catch(e){}
+$('decl').addEventListener('input',()=>{updRef();try{localStorage.setItem('alineador_decl',$('decl').value)}catch(e){}});
+try{const m=localStorage.getItem('alineador_nmode');if(m==='real'||m==='mag')nmode=m;const c=parseFloat(localStorage.getItem('alineador_adj_v2'));if(!isNaN(c))corr=c}catch(e){}
+const saveC=()=>{try{localStorage.setItem('alineador_nmode',nmode);localStorage.setItem('alineador_adj_v2',String(corr))}catch(e){}};
+function setCorr(v){corr=Math.max(-45,Math.min(45,Math.round(v*10)/10));saveC();updRef();render()}
+$('nmode').onchange=()=>{nmode=$('nmode').value;saveC();updRef();render()};
+$('cZero').onclick=()=>setCorr(0);
+updRef();
+
+// ---------- Ajuste fino por grados ----------
+function sgn(v){return(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(1).replace('.',',')+'°'}
+function tunerHTML(){
+  let c='',f='';
+  for(let k=-30;k<=30;k++)c+=`<button class="alt tn-c" data-k="${k}">${k>0?'+'+k:k<0?'−'+(-k):'0'}</button>`;
+  for(let i=-5;i<=5;i++)f+=`<button class="alt tn-c" data-f="${i}">${i>0?'+':i<0?'−':''}0,${Math.abs(i)}</button>`;
+  return `<div class="tn-r"></div><div class="tn-s2"></div><div class="tn-l">Grados enteros</div><div class="tn-s">${c}</div><div class="tn-l">Décimas de grado</div><div class="tn-s">${f}</div>`;
+}
+function paintTuners(){
+  const co=Math.round(corr),fi=Math.round((corr-co)*10),d=num($('decl').value)||0,base=nmode==='real'?d:0;
+  document.querySelectorAll('.tuner').forEach(t=>{
+    const r=t.querySelector('.tn-r');if(!r)return;
+    r.textContent='Ajuste '+sgn(corr);
+    t.querySelector('.tn-s2').textContent=(nmode==='real'?'Base: declinación '+sgn(d):'Base: sin declinación')+' · Total aplicado: '+sgn(base+corr);
+    t.querySelectorAll('.tn-c').forEach(b=>b.classList.toggle('on',b.dataset.k!==undefined?+b.dataset.k===co:+b.dataset.f===fi));
+    t.querySelectorAll('.tn-s').forEach(s=>{const a=s.querySelector('.on');if(a&&s.offsetParent)s.scrollLeft=a.offsetLeft-s.clientWidth/2+a.offsetWidth/2});
+  });
+}
+document.querySelectorAll('.tuner').forEach(t=>{t.innerHTML=tunerHTML()});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.tn-c');if(!b)return;
+  const co=Math.round(corr),fi=Math.round((corr-co)*10);
+  setCorr(b.dataset.k!==undefined?+b.dataset.k+fi/10:co+(+b.dataset.f)/10);
+});
+const AJ='alineador_ajustes_v1';
+const loadAj=()=>{try{return JSON.parse(localStorage.getItem(AJ)||'[]')}catch(e){return[]}};
+const saveAjL=a=>{try{localStorage.setItem(AJ,JSON.stringify(a))}catch(e){$('corrTxt').textContent='No se pudo guardar: el navegador bloquea el almacenamiento.'}};
+function renderAj(){
+  $('ajList').innerHTML=loadAj().map(it=>`<div class="lk"><b>${esc(it.name)}</b><small>Ajuste ${sgn(it.adj)} · ${it.mode==='mag'?'norte magnético (sin declinación)':'norte real, declinación '+sgn(it.decl)}</small><small>${esc(fdate(it.date))}</small><div class="r3"><button class="alt" data-a="use" data-i="${esc(it.id)}">USAR</button><button class="alt" data-a="del" data-i="${esc(it.id)}">BORRAR</button></div></div>`).join('');
+}
+function saveAj(){
+  const n=prompt('Nombre del ajuste (ej. Zona Ibagué):','Ajuste '+sgn(corr));if(n===null)return;
+  const a=loadAj();a.unshift({id:Date.now().toString(36),name:n.trim()||'Ajuste',adj:corr,decl:num($('decl').value)||0,mode:nmode,date:new Date().toISOString()});
+  saveAjL(a.slice(0,20));renderAj();$('corrTxt').textContent='💾 Guardado: '+(n.trim()||'Ajuste')+' ('+sgn(corr)+')';
+}
+$('cSave').onclick=saveAj;$('tuSave').onclick=saveAj;
+$('ajList').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const a=loadAj(),it=a.find(x=>x.id===b.dataset.i);if(!it)return;
+  if(b.dataset.a==='del'){saveAjL(a.filter(x=>x.id!==it.id));renderAj();return}
+  nmode=it.mode;$('decl').value=it.decl;try{localStorage.setItem('alineador_decl',String(it.decl))}catch(_){}
+  setCorr(it.adj);$('corrTxt').textContent='Aplicado: '+it.name+' ('+sgn(corr)+')';
+});
+renderAj();updRef();
+// ---------- Perfil del terreno y obstáculos ----------
+const PF='alineador_perfil_v1';
+function gcPoint(p1,l1,p2,l2,f,dl){
+  if(dl<1e-9)return[p1/D2R,l1/D2R];
+  const A=Math.sin((1-f)*dl)/Math.sin(dl),B=Math.sin(f*dl)/Math.sin(dl);
+  const x=A*Math.cos(p1)*Math.cos(l1)+B*Math.cos(p2)*Math.cos(l2),y=A*Math.cos(p1)*Math.sin(l1)+B*Math.cos(p2)*Math.sin(l2),z=A*Math.sin(p1)+B*Math.sin(p2);
+  return[Math.atan2(z,Math.hypot(x,y))/D2R,Math.atan2(y,x)/D2R];
+}
+async function elevBatch(lats,lons){
+  const u='https://api.open-meteo.com/v1/elevation?latitude='+lats.map(v=>v.toFixed(5)).join(',')+'&longitude='+lons.map(v=>v.toFixed(5)).join(',');
+  const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();if(!Array.isArray(j.elevation))throw new Error('respuesta inválida');
+  return j.elevation;
+}
+$('pfBtn').onclick=async()=>{
+  if(!T){$('pfMsg').textContent='Primero calcula el destino.';return}
+  const la1=num($('oLat').value),lo1=num($('oLon').value),la2=num($('dLat').value),lo2=num($('dLon').value);
+  const N=Math.max(40,Math.min(300,Math.round(T.d/200))),dl=T.d/R,pts=[];
+  for(let i=0;i<=N;i++)pts.push(gcPoint(la1*D2R,lo1*D2R,la2*D2R,lo2*D2R,i/N,dl));
+  const key=[la1,lo1,la2,lo2].map(v=>v.toFixed(5)).join(',')+','+N;
+  $('pfMsg').textContent='Descargando elevaciones del terreno…';$('pfBtn').disabled=true;
+  let el=null;
+  try{
+    const jobs=[];for(let i=0;i<pts.length;i+=100){const c=pts.slice(i,i+100);jobs.push(elevBatch(c.map(p=>p[0]),c.map(p=>p[1])))}
+    el=(await Promise.all(jobs)).flat();
+    if(el.length!==pts.length)throw new Error('datos incompletos');
+    try{localStorage.setItem(PF,JSON.stringify({key,el}))}catch(e){}
+    $('pfMsg').textContent='';
+  }catch(e){
+    try{const c=JSON.parse(localStorage.getItem(PF)||'null');if(c&&c.key===key){el=c.el;$('pfMsg').textContent='Sin conexión: se usa el último terreno descargado para este mismo enlace.'}}catch(_){}
+    if(!el)$('pfMsg').textContent='No se pudo descargar el terreno ('+e.message+'). Esta función necesita datos móviles o Wi‑Fi.';
+  }
+  $('pfBtn').disabled=false;
+  if(el)drawProfile(pts,el);
+};
+function drawProfile(pts,el){
+  el=el.map((v,i)=>(v==null||isNaN(v))?(i?el[i-1]:0):v);
+  const N=pts.length-1,D=T.d,Re=R*4/3;
+  let fm=num($('fMHz').value);const fOk=fm>0;if(fm>0&&fm<100)fm*=1000;
+  const fG=(fm>0?fm:5800)/1000;
+  const hA=el[0]+(num($('oH').value)||0),hB=el[N]+(num($('dH').value)||0);
+  const X=[],TR=[],LOS=[],F=[],CL=[],MG=[];
+  for(let i=0;i<=N;i++){
+    const x=D*i/N;X.push(x);TR.push(el[i]+x*(D-x)/(2*Re));LOS.push(hA+(hB-hA)*i/N);
+    F.push(17.32*Math.sqrt((x/1000)*((D-x)/1000)/(fG*(D/1000))));CL.push(LOS[i]-TR[i]);MG.push(CL[i]-0.6*F[i]);
+  }
+  let wc=1,wm=1;for(let i=1;i<N;i++){if(CL[i]<CL[wc])wc=i;if(MG[i]<MG[wm])wm=i}
+  // dibujo
+  const W=360,H=210,L=40,Rr=8,Tp=10,B=24;
+  const ymin=Math.min(...TR)-15,ymax=Math.max(...TR,...LOS.map((v,i)=>v+0.6*F[i]))+15;
+  const sx=i=>L+(W-L-Rr)*i/N,sy=v=>Tp+(H-Tp-B)*(1-(v-ymin)/(ymax-ymin));
+  const pt=(i,v)=>sx(i).toFixed(1)+','+sy(v).toFixed(1);
+  const up=LOS.map((v,i)=>pt(i,v+0.6*F[i])),lo=LOS.map((v,i)=>pt(i,v-0.6*F[i])).reverse();
+  let g=`<polygon points="${pt(0,ymin)} ${TR.map((v,i)=>pt(i,v)).join(' ')} ${pt(N,ymin)}" fill="#8a6a3b" fill-opacity=".85"/>`;
+  g+=`<polygon points="${up.join(' ')} ${lo.join(' ')}" fill="#3dd6c6" fill-opacity=".18"/>`;
+  g+=`<line x1="${sx(0).toFixed(1)}" y1="${sy(hA).toFixed(1)}" x2="${sx(N).toFixed(1)}" y2="${sy(hB).toFixed(1)}" stroke="#3dd6c6" stroke-width="2"/>`;
+  for(let i=1;i<N;i++)if(MG[i]<0)g+=`<circle cx="${sx(i).toFixed(1)}" cy="${sy(TR[i]).toFixed(1)}" r="2.4" fill="${CL[i]<0?'#ff5d5d':'#f5a524'}"/>`;
+  [[0,el[0],hA],[N,el[N],hB]].forEach(([i,a,b])=>g+=`<line x1="${sx(i).toFixed(1)}" y1="${sy(a).toFixed(1)}" x2="${sx(i).toFixed(1)}" y2="${sy(b).toFixed(1)}" stroke="#fff" stroke-width="3"/>`);
+  if(MG[wm]<0)g+=`<line x1="${sx(wm).toFixed(1)}" y1="${Tp}" x2="${sx(wm).toFixed(1)}" y2="${H-B}" stroke="#ff5d5d" stroke-width="1" stroke-dasharray="3 3"/>`;
+  const tx=(x,y,t,a)=>`<text x="${x}" y="${y}" font-size="9" fill="var(--mut)" text-anchor="${a||'middle'}">${t}</text>`;
+  g+=tx(L-4,sy(ymax-15)+3,Math.round(ymax-15)+' m','end')+tx(L-4,sy(ymin+15)+3,Math.round(ymin+15)+' m','end');
+  g+=tx(sx(0),H-8,'A · 0 km','start')+tx(sx(N/2),H-8,(D/2000).toFixed(1)+' km')+tx(sx(N),H-8,'B · '+(D/1000).toFixed(1)+' km','end');
+  $('pfSvg').innerHTML=g;
+  // veredicto
+  const km=i=>(X[i]/1000).toFixed(1),cap=v=>v>200?'más de 200':Math.round(v);
+  let ver,col;
+  if(CL[wc]<0){ver='✗ OBSTRUIDO';col='var(--bad)'}
+  else if(MG[wm]<0){ver='⚠ ZONA FRESNEL INVADIDA (poco despeje)';col='var(--warn)'}
+  else{ver='✓ DESPEJADO';col='var(--ok)'}
+  const L1=[`Azimut ${T.az.toFixed(1)}° · distancia ${fmtD(D)} · terreno en A ${Math.round(el[0])} m, en B ${Math.round(el[N])} m`,
+    `Despeje mínimo sobre la línea de vista: ${CL[wc].toFixed(0)} m, a ${km(wc)} km de A`];
+  if(MG[wm]<0){
+    const need=-MG[wm],fr=X[wm]/D;
+    L1.push(`Para librar el 60% de Fresnel (${fG.toFixed(1)} GHz) faltan ${need.toFixed(0)} m a ${km(wm)} km de A (${pts[wm][0].toFixed(5)}, ${pts[wm][1].toFixed(5)}).`);
+    L1.push(`Para librarlo: subir la antena A unos ${cap(need/(1-fr))} m, o la B unos ${cap(need/fr)} m.`);
+  }
+  if(!fOk)L1.push('Frecuencia supuesta de 5,8 GHz: escribe la tuya en Parámetros del radio para un cálculo exacto.');
+  const oa=num($('oAlt').value);
+  if(!isNaN(oa)&&Math.abs(oa-el[0])>20)L1.push(`Nota: tu altitud en A (${Math.round(oa)} m) difiere del mapa (${Math.round(el[0])} m); el perfil usa la del mapa.`);
+  PFLAST={key:PFKEY(),pts:pts.map(q=>[q[0],q[1]]),el:el.slice(),wm:(MG[wm]<0?wm:null)};
+  $('pfVer').textContent=ver;$('pfVer').style.color=col;
+  $('pfTxt').innerHTML=L1.map(esc).join('<br>');
+  $('pfBox').hidden=false;
+}
+
+// ---------- Tablero (HUD) ----------
+(function(){
+  const tx=(x,y,t,c,sz)=>`<text x="${x}" y="${y}" text-anchor="middle" fill="${c||'#e9f0fb'}" font-weight="800" font-size="${sz||14}">${t}</text>`;
+  let tk='';for(let i=0;i<360;i+=10)tk+=`<line x1="100" y1="14" x2="100" y2="${i%30?20:25}" stroke="#bfe6ff" stroke-width="${i%30?1.2:2}" transform="rotate(${i} 100 100)"/>`;
+  $('gC').innerHTML=`<circle cx="100" cy="100" r="92" fill="none" stroke="#19d3ff" stroke-opacity=".5" stroke-width="2"/><polygon points="100,2 93,15 107,15" fill="#19d3ff"/><g id="hDial">${tk}${tx(100,48,'N','#ff6b6b',17)}${tx(156,106,'E')}${tx(100,166,'S')}${tx(44,106,'O')}<g id="hTm"><polygon points="100,12 90,34 110,34" fill="#ffb02e"/></g></g><g id="hArr"><polygon points="100,56 86,106 100,96 114,106" fill="#ffb02e" stroke="#000" stroke-opacity=".5"/></g><circle cx="100" cy="100" r="5" fill="#fff"/>`;
+  let al='';for(const v of [10,20,30])for(const q of [1,-1]){const y=100-q*v*3;al+=`<line x1="70" y1="${y}" x2="130" y2="${y}" stroke="#fff" stroke-opacity=".8" stroke-width="1.5"/>${tx(58,y+4,v,'#fff',10)}${tx(142,y+4,v,'#fff',10)}`}
+  $('gA').innerHTML=`<defs><clipPath id="hCl"><circle cx="100" cy="100" r="88"/></clipPath></defs><g clip-path="url(#hCl)"><g id="hHor"><rect x="-100" y="-400" width="400" height="500" fill="#2a8cff"/><rect x="-100" y="100" width="400" height="500" fill="#9a6a1c"/><line x1="-100" y1="100" x2="300" y2="100" stroke="#fff" stroke-opacity=".75" stroke-width="1"/>${al}<line id="hTg" x1="40" x2="160" y1="100" y2="100" stroke="#ffb02e" stroke-width="3" stroke-dasharray="6 4"/></g></g><circle cx="100" cy="100" r="88" fill="none" stroke="#7fb4d8" stroke-width="3"/><path d="M60 104h30l10 8 10-8h30" fill="none" stroke="#ffe066" stroke-width="3.5"/>`;
+  let rt='';for(const v of [-90,-80,-70,-60,-50]){const g=gp(100,100,58,rth(v));rt+=tx(g[0].toFixed(1),(g[1]+4).toFixed(1),v,'#e9f0fb',10)}
+  $('gR').innerHTML=arcP(-90,rth(-69),'#ff5d5d',12)+arcP(rth(-69),rth(-62),'#f5a524',12)+arcP(rth(-62),rth(-55),'#2fd16b',12)+arcP(rth(-55),90,'#18f0a0',12)+rt+`<g id="hRN" transform="rotate(-90 100 100)"><polygon points="100,28 95,100 105,100" fill="#fff" stroke="#000" stroke-opacity=".5"/></g><circle cx="100" cy="100" r="7" fill="#fff"/>`;
+  const mapSvg=hd=>{
+    let g=`<circle cx="100" cy="100" r="86" fill="#07182a" stroke="#19d3ff" stroke-opacity=".5" stroke-width="2"/><circle cx="100" cy="100" r="43" fill="none" stroke="#19d3ff" stroke-opacity=".25"/><line x1="100" y1="14" x2="100" y2="186" stroke="#19d3ff" stroke-opacity=".2"/><line x1="14" y1="100" x2="186" y2="100" stroke="#19d3ff" stroke-opacity=".2"/>${tx(100,28,'N','#ff6b6b',13)}`;
+    if(hd!==null)g+=`<path d="M100 100 L84 36 A66 66 0 0 1 116 36 Z" fill="#19d3ff" fill-opacity=".28" transform="rotate(${hd} 100 100)"/>`;
+    if(T){const b=gp(100,100,72,T.az);g+=`<line x1="100" y1="100" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="#ffb02e" stroke-width="2.5" stroke-dasharray="5 3"/><circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="7" fill="#ffb02e"/>${tx(b[0].toFixed(1),(b[1]+(b[1]>100?20:-12)).toFixed(1),'B','#ffb02e',12)}${tx(100,176,fmtD(T.d)+' · '+T.az.toFixed(0)+'°','#fff',12)}`}
+    return g+`<circle cx="100" cy="100" r="6" fill="#19d3ff"/>${tx(100,122,'A','#19d3ff',12)}`;
+  };
+  const it=(l,v)=>`<div><small>${l}</small><b>${v}</b></div>`;
+  function hudTick(){
+    const hd=heading(),r=rssiVal(),now=new Date(),sg=v=>(v>=0?'+':'')+v;
+    $('hClk').textContent=now.toLocaleTimeString('es-CO')+' · '+now.toLocaleDateString('es-CO');
+    const la=num($('oLat').value),lo=num($('oLon').value),al=num($('oAlt').value);
+    $('hLoc').textContent=(isNaN(la)||isNaN(lo))?'Sin ubicación':`${la.toFixed(4)}°, ${lo.toFixed(4)}°`+(isNaN(al)?'':` · ${Math.round(al)} m`);
+    let dl=null;
+    if(hd!==null){$('hDial').setAttribute('transform',`rotate(${-hd} 100 100)`);$('vC').textContent=Math.round(hd)+'°'}else $('vC').textContent='—';
+    if(T){$('hTm').setAttribute('transform',`rotate(${T.az} 100 100)`);if(hd!==null){dl=wrap(T.az-hd);$('hArr').setAttribute('transform',`rotate(${dl} 100 100)`)}}
+    $('hArr').style.display=dl===null?'none':'';
+    $('sC').textContent=hd===null?'Activa la brújula':!T?'Calcula el destino':Math.abs(dl)<=TOL?'✓ DIRECCIÓN OK':`GIRAR ${Math.round(Math.abs(dl))}° ${dl>0?'▶':'◀'}`;
+    $('sC').style.color=dl!==null&&Math.abs(dl)<=TOL?'#2fd16b':'#ffb02e';
+    if(pitch!==null){$('hHor').setAttribute('transform',`translate(0 ${(Math.max(-40,Math.min(40,pitch))*3).toFixed(1)})`);$('vA').textContent=(pitch>=0?'+':'')+pitch.toFixed(1)+'°'}else $('vA').textContent='—';
+    $('hTg').style.display=T?'':'none';
+    if(T){const y=100-Math.max(-40,Math.min(40,T.el))*3;$('hTg').setAttribute('y1',y);$('hTg').setAttribute('y2',y)}
+    const dv=(T&&pitch!==null)?T.el-pitch:null;
+    $('sA').textContent=dv===null?(T?'Sin sensor':'Calcula el destino'):Math.abs(dv)<=TOL?'✓ INCLINACIÓN OK':`${dv>0?'↑ SUBIR':'↓ BAJAR'} ${Math.abs(dv).toFixed(1)}°`;
+    $('sA').style.color=dv!==null&&Math.abs(dv)<=TOL?'#2fd16b':'#ffb02e';
+    $('hRN').setAttribute('transform',`rotate(${isNaN(r)?-90:rth(r)} 100 100)`);
+    const c=isNaN(r)?null:sigClass(r),snr=num($('snr').value);
+    $('vR').textContent=isNaN(r)?'—':r+' dBm';$('sR').textContent=c?c[1]+(isNaN(snr)?'':' · SNR '+snr):'Ingresa el RSSI';$('sR').style.color=c?c[2]:'';
+    if(document.activeElement!==$('hRssi'))$('hRssi').value=$('rssi').value;
+    $('gM').innerHTML=mapSvg(hd);
+    const base=nmode==='real'?(num($('decl').value)||0):0,fs=$('fspl').textContent.replace(/^.*: /,'');
+    $('hData').innerHTML=(T?it('DISTANCIA',fmtD(T.d))+it('AZIMUT',T.az.toFixed(1)+'° '+NAMES[Math.round(T.az/22.5)%16])+it('ELEVACIÓN',sg(+T.el.toFixed(2))+'°')+it('DIF. ALTURA',sg(Math.round(T.dh))+' m'):'<div class="w">Escribe tu ubicación y el destino, y pulsa CALCULAR.</div>')
+      +it('RUMBO ACTUAL',hd===null?'—':hd.toFixed(1)+'°')+it('AJUSTE TOTAL',sgn(base+corr))+it('PRECISIÓN GPS',gpsAcc==null?'—':'±'+Math.round(gpsAcc)+' m')+it('ZOOM CÁMARA','×'+zoomV.toFixed(1))
+      +(fs&&fs.length<20?it('PÉRDIDA FSPL',fs):'');
+  }
+  $('hud').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
+    const g=b.dataset.go;
+    if(g==='cam')$('openCam').onclick();else if(g==='tower')$('twBtn').onclick();
+    else if(g==='top')window.scrollTo({top:0,behavior:'smooth'});
+    else if(g==='resCard'&&$('resCard').hidden){window.scrollTo({top:0,behavior:'smooth'});$('oLat').scrollIntoView({behavior:'smooth',block:'center'})}
+    else $(g).scrollIntoView({behavior:'smooth',block:'center'});
+  });
+  $('hM').onclick=()=>$('rM').onclick();$('hP').onclick=()=>$('rP').onclick();
+  $('hRssi').addEventListener('input',()=>{$('rssi').value=$('hRssi').value;$('rssi').dispatchEvent(new Event('input'))});
+  hudTick();setInterval(hudTick,200);
+})();
+
+// ---------- Pestañas, zoom en torre y brújula grande ----------
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.tab').forEach(t=>{t.classList.toggle('on',t.id===b.dataset.t);if(t.id===b.dataset.t)t.scrollTop=0});
+});
+(function(){const c=$('svC').querySelector('circle');if(c)c.setAttribute('fill','none')})();
+$('tZi').onclick=()=>zStep(0.5);$('tZo').onclick=()=>zStep(-0.5);
+let pz=null;const pdist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+$('cam').addEventListener('touchstart',e=>{if(e.touches.length===2)pz={d:pdist(e),z:zoomV}},{passive:true});
+$('cam').addEventListener('touchmove',e=>{if(pz&&e.touches.length===2){zoomV=Math.max(1,Math.min(zHw?zHw.max:8,Math.round(pz.z*pdist(e)/pz.d*10)/10));applyZoom()}},{passive:true});
+$('cam').addEventListener('touchend',()=>{pz=null},{passive:true});
+
+// ---------- Torre: mapa A–B y línea de altura ----------
+function towerMap(hd,ok){
+  const la=num($('oLat').value),lo=num($('oLon').value),lb=num($('dLat').value),ob=num($('dLon').value);
+  const tx=(x,y,t,c,sz)=>`<text x="${(+x).toFixed(1)}" y="${(+y).toFixed(1)}" text-anchor="middle" fill="${c}" font-size="${sz}" font-weight="800">${t}</text>`;
+  let g=`<rect x="2" y="2" width="196" height="196" rx="12" fill="rgba(3,8,12,.62)" stroke="#19d3ff" stroke-opacity=".6" stroke-width="2"/><path d="M100 2V198M2 100H198" stroke="#19d3ff" stroke-opacity=".12"/>`+tx(182,22,'N','#ff6b6b',14)+`<path d="M182 27v10" stroke="#ff6b6b" stroke-width="2"/>`;
+  const hasA=!(isNaN(la)||isNaN(lo)),hasB=hasA&&!(isNaN(lb)||isNaN(ob));
+  if(!hasA)return g+tx(100,104,'Sin ubicación','#8fd8ff',13);
+  let ax=100,ay=100,bx=0,by=0;
+  if(hasB){
+    const x=(ob-lo)*Math.cos(la*D2R)*111.32,y=(lb-la)*110.57,k=125/Math.max(Math.abs(x),Math.abs(y),0.05);
+    ax=100-x/2*k;ay=100+y/2*k;bx=100+x/2*k;by=100-y/2*k;
+  }
+  if(hd!==null)g+=`<path d="M${ax.toFixed(1)} ${ay.toFixed(1)} L${(ax-17).toFixed(1)} ${(ay-62).toFixed(1)} A64 64 0 0 1 ${(ax+17).toFixed(1)} ${(ay-62).toFixed(1)} Z" fill="${ok?'#2fd16b':'#19d3ff'}" fill-opacity=".38" transform="rotate(${hd.toFixed(1)} ${ax.toFixed(1)} ${ay.toFixed(1)})"/>`;
+  if(hasB){
+    g+=`<line x1="${ax.toFixed(1)}" y1="${ay.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="#ffb02e" stroke-width="2.5" stroke-dasharray="6 4"/><circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="7" fill="#ffb02e"/>`+tx(bx,Math.max(16,Math.min(184,by+(by>100?21:-11))),'B','#ffb02e',15);
+    if(T)g+=tx(100,192,fmtD(T.d)+' · '+T.az.toFixed(0)+'°','#fff',12);
+  }
+  return g+`<circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="6.5" fill="#19d3ff"/>`+tx(ax,Math.max(16,Math.min(184,ay+(ay>100?-10:21))),'A','#19d3ff',15);
+}
+const AIMF=0.51;
+function aimY(){const c=$('cam');if(!c.classList.contains('tower'))return c.clientHeight/2;const r=$('attSvg').getBoundingClientRect();return r.height?r.top+r.height*AIMF:c.clientHeight/2}
+function pEff(){const c=$('cam'),H=c.clientHeight,fpx=(Math.min(c.clientWidth,H)/2)/Math.tan((+$('fov').value)/2*D2R)*zoomV;return pitch+Math.atan((H/2-aimY())/fpx)/D2R}
+function updTline(){
+  const L=$('tline');
+  if(!T||pitch===null){L.style.display='none';return}
+  L.style.display='';
+  const c=$('cam'),W=c.clientWidth,H=c.clientHeight,fpx=(Math.min(W,H)/2)/Math.tan((+$('fov').value)/2*D2R)*zoomV;
+  const dv=T.el-pitch,dm=T.el-pEff(),ae=Math.abs(dm),y=H/2-fpx*Math.tan(Math.max(-80,Math.min(80,dv))*D2R);
+  const hi=$('twB').getBoundingClientRect().top-16,cl=Math.max(14,Math.min(hi,y));
+  const col=ae<=TOL?'#3dff8a':ae<=8?'#ffb02e':'#ff5d5d';
+  L.style.top=cl+'px';L.style.borderTopColor=col;L.style.borderTopStyle=(cl!==y)?'dashed':'solid';L.style.color=col;
+  L.firstChild.textContent=ae<=TOL?'✓ ALTURA OK':(dm>0?'▲ SUBIR ':'▼ BAJAR ')+ae.toFixed(1)+'°';
+}
+
+// ---------- Torre v3: inclinación grande + mapa real ----------
+let PFLAST=null;
+const PFKEY=()=>['oLat','oLon','dLat','dLon'].map(i=>(+num($(i).value)).toFixed(5)).join(',');
+(function buildAtt(){
+  const K=3.4;let g='<rect x="-100" y="100" width="400" height="500" fill="rgba(0,0,0,.28)"/>';
+  for(let p=-80;p<=80;p+=10){
+    if(p===0)continue;const y=100-K*p,w=(p%20===0)?38:24;
+    g+=`<line x1="${100-w}" y1="${y}" x2="${100+w}" y2="${y}" stroke="#fff" stroke-width="2" stroke-opacity=".9"/>`;
+    const t=`font-size="9" font-weight="800" fill="#fff" stroke="#000" stroke-width=".8" paint-order="stroke"`;
+    g+=`<text x="${100-w-4}" y="${y+3.2}" text-anchor="end" ${t}>${Math.abs(p)}</text><text x="${100+w+4}" y="${y+3.2}" ${t}>${Math.abs(p)}</text>`;
+  }
+  const ch='M44 96H82L100 112L118 96H156';
+  $('attSvg').innerHTML=`<defs><clipPath id="attClip"><circle cx="100" cy="100" r="92"/></clipPath></defs><circle cx="100" cy="100" r="94" fill="rgba(0,0,0,.12)" stroke="#8fd8ff" stroke-width="2.5"/><g clip-path="url(#attClip)"><g id="attG">${g}</g><g id="attT"><line x1="52" y1="100" x2="148" y2="100" stroke="#3dff8a" stroke-width="3" stroke-dasharray="6 5"/><path d="M52 93v14M148 93v14" stroke="#3dff8a" stroke-width="3" fill="none"/></g></g><text id="attArr" x="100" y="36" text-anchor="middle" font-size="26" font-weight="800" fill="#ff5d5d" style="display:none">▲</text><path d="${ch}" fill="none" stroke="#000" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="${ch}" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+})();
+function layoutAtt(){
+  const a=$('twAtt'),b=$('twB').getBoundingClientRect(),
+    top=Math.max($('twL').getBoundingClientRect().bottom,$('twR').getBoundingClientRect().bottom,$('svC').getBoundingClientRect().bottom)+6,
+    h=b.top-6-top-56;
+  a.style.top=top+'px';a.style.width=Math.max(60,Math.min(window.innerWidth-12,h))+'px';$('aimDot').style.top=aimY()+'px';
+}
+function drawAtt(){
+  const K=3.4;
+  if(pitch===null){$('attV').textContent='—';$('attC').textContent='sin sensor';return}
+  $('attG').setAttribute('transform',`translate(0 ${(K*pEff()).toFixed(1)})`);
+  let col='#fff',txt='calcula el destino';
+  if(T){
+    const pe=pEff(),dv=T.el-pe,ae=Math.abs(dv),y=K*(pe-T.el),off=Math.abs(y)>84;
+    col=ae<=TOL?'#3dff8a':ae<=8?'#ffb02e':'#ff5d5d';
+    $('attT').setAttribute('transform',`translate(0 ${Math.max(-300,Math.min(300,y)).toFixed(1)})`);$('attT').style.display=off?'none':'';
+    for(const e of $('attT').children)e.setAttribute('stroke',col);
+    const ar=$('attArr');ar.style.display=off?'':'none';ar.textContent=dv>0?'▲':'▼';ar.setAttribute('y',dv>0?36:176);ar.setAttribute('fill',col);
+    txt=ae<=TOL?'✓ INCLINACIÓN OK':(dv>0?'↑ SUBIR ':'↓ BAJAR ')+ae.toFixed(1)+'°';
+  }else $('attT').style.display='none';
+  $('attV').textContent=(pitch>=0?'+':'')+pitch.toFixed(1)+'°';$('attC').textContent=txt;$('attC').style.color=col;
+}
+// Mapa con teselas (cambia TILES para usar otro proveedor)
+const TILES=[
+  {u:(z,x,y)=>`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,a:'Imágenes © Esri, Maxar, Earthstar Geographics',max:19},
+  {u:(z,x,y)=>`https://a.tile.opentopomap.org/${z}/${x}/${y}.png`,a:'© OpenStreetMap · SRTM · OpenTopoMap (CC-BY-SA)',max:17}];
+let mapL=0,mapKey='',mapSt=null,tOk=0,tErr=0;
+const mx=(lon,z)=>(lon+180)/360*Math.pow(2,z)*256;
+const my=(lat,z)=>{const q=Math.sin(lat*D2R);return(0.5-Math.log((1+q)/(1-q))/(4*Math.PI))*Math.pow(2,z)*256};
+window.tileOk=()=>{tOk++;$('mapMsg').textContent=''};
+window.tileErr=()=>{tErr++;if(!tOk&&tErr>=2)$('mapMsg').textContent='Sin mapa base: se necesita internet'};
+function dest(la,lo,brg,dist){const d=dist/R,b=brg*D2R,p1=la*D2R,l1=lo*D2R,p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(b)),l2=l1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2));return[p2/D2R,l2/D2R]}
+function azBack(la1,lo1,la2,lo2){const p1=la1*D2R,p2=la2*D2R,dl=(lo2-lo1)*D2R;return(Math.atan2(Math.sin(dl)*Math.cos(p2),Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl))/D2R+360)%360}
+function groundDist(){
+  if(!T)return null;
+  if(PFLAST&&PFLAST.key===PFKEY()){let q=0;const N=PFLAST.el.length-1,seg=T.d/N;for(let i=0;i<N;i++)q+=Math.hypot(seg,PFLAST.el[i+1]-PFLAST.el[i]);return{v:q,l:'Suelo   '}}
+  return{v:Math.hypot(T.d,T.dh),l:'3D      '};
+}
+function buildTiles(){
+  const {z,cx,cy,W,H}=mapSt,n=Math.pow(2,z),L=TILES[mapL];
+  const x0=Math.floor((cx-W/2)/256),x1=Math.floor((cx+W/2)/256),y0=Math.max(0,Math.floor((cy-H/2)/256)),y1=Math.min(n-1,Math.floor((cy+H/2)/256));
+  let h='';
+  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)h+=`<img alt="" src="${L.u(z,((tx%n)+n)%n,ty)}" onerror="this.style.display='none';tileErr()" onload="tileOk()" style="position:absolute;left:${(tx*256-(cx-W/2)).toFixed(1)}px;top:${(ty*256-(cy-H/2)).toFixed(1)}px;width:256px;height:256px">`;
+  tOk=0;tErr=0;$('mapMsg').textContent='';$('mapTiles').innerHTML=h;$('mapAttr').textContent=L.a;
+}
+function drawMap(hd,ok){
+  const box=$('twMapT'),W=box.clientWidth,H=box.clientHeight;if(!W||!H)return;
+  const la=num($('oLat').value),lo=num($('oLon').value),lb=num($('dLat').value),ob=num($('dLon').value);
+  const hasA=!(isNaN(la)||isNaN(lo)),hasB=hasA&&!(isNaN(lb)||isNaN(ob));
+  if(!hasA){$('mapOv').innerHTML='';$('mapTiles').innerHTML='';$('mapInfo').textContent='Sin ubicación';return}
+  const key=[la,lo,hasB?lb:0,hasB?ob:0].map(v=>v.toFixed(5)).join('|')+'|'+W+'x'+H+'|'+mapL;
+  if(key!==mapKey){
+    mapKey=key;const L=TILES[mapL];let z=L.max;
+    if(hasB){for(;z>3;z--)if(Math.abs(mx(ob,z)-mx(lo,z))<=W*.72&&Math.abs(my(lb,z)-my(la,z))<=H*.6)break}else z=Math.min(L.max,15);
+    mapSt={z,W,H,cx:hasB?(mx(lo,z)+mx(ob,z))/2:mx(lo,z),cy:hasB?(my(la,z)+my(lb,z))/2:my(la,z)};
+    buildTiles();datosEnlace();
+  }
+  const {z,cx,cy}=mapSt,P=(a,b)=>[mx(b,z)-(cx-W/2),my(a,z)-(cy-H/2)],f=v=>v.toFixed(1);
+  const lab=(x,y,t,c)=>`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" font-size="14" font-weight="800" fill="${c}" stroke="#000" stroke-width="3" paint-order="stroke">${t}</text>`;
+  const pa=P(la,lo);let g='';
+  if(hd!==null){
+    const len=hasB&&T?T.d*0.6:3000,c1=P(...dest(la,lo,hd-13,len)),c2=P(...dest(la,lo,hd+13,len)),c0=P(...dest(la,lo,hd,len*1.6)),col=ok?'#2fd16b':'#19d3ff';
+    g+=`<polygon points="${f(pa[0])},${f(pa[1])} ${f(c1[0])},${f(c1[1])} ${f(c2[0])},${f(c2[1])}" fill="${col}" fill-opacity=".38"/><line x1="${f(pa[0])}" y1="${f(pa[1])}" x2="${f(c0[0])}" y2="${f(c0[1])}" stroke="${col}" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+  }
+  if(hasB){
+    const pb=P(lb,ob);
+    g+=`<line x1="${f(pa[0])}" y1="${f(pa[1])}" x2="${f(pb[0])}" y2="${f(pb[1])}" stroke="#000" stroke-width="5" stroke-opacity=".6"/><line x1="${f(pa[0])}" y1="${f(pa[1])}" x2="${f(pb[0])}" y2="${f(pb[1])}" stroke="#ffb02e" stroke-width="2.6" stroke-dasharray="7 4"/>`;
+    if(PFLAST&&PFLAST.key===PFKEY()&&PFLAST.wm!=null){const po=P(PFLAST.pts[PFLAST.wm][0],PFLAST.pts[PFLAST.wm][1]);g+=`<circle cx="${f(po[0])}" cy="${f(po[1])}" r="7" fill="#ff5d5d" stroke="#fff" stroke-width="2"/>`+lab(po[0],po[1]-11,'⚠ obstáculo','#ff8a8a')}
+    g+=`<circle cx="${f(pb[0])}" cy="${f(pb[1])}" r="6.5" fill="#ffb02e" stroke="#000" stroke-width="2"/>`+lab(pb[0],pb[1]+(pb[1]>H/2?-11:21),'B','#ffb02e');
+  }
+  g+=`<circle cx="${f(pa[0])}" cy="${f(pa[1])}" r="6.5" fill="#19d3ff" stroke="#000" stroke-width="2"/>`+lab(pa[0],pa[1]+(pa[1]>H/2?-11:21),'A','#19d3ff');
+  $('mapOv').innerHTML=g;
+  if(T&&hasB){const gd=groundDist();$('mapInfo').textContent=`Mapa    ${(T.d/1000).toFixed(2)} km\n${gd.l}${(gd.v/1000).toFixed(2)} km\nDirección ${T.az.toFixed(1)}°\nRegreso   ${azBack(lb,ob,la,lo).toFixed(1)}°`}
+  else $('mapInfo').textContent=hasB?'Calcula el destino':'Falta el destino';
+}
+const dms=(v,lat)=>{const h=lat?(v>=0?'N':'S'):(v>=0?'E':'O');v=Math.abs(v);const d=Math.floor(v),m=Math.floor((v-d)*60),q=((v-d)*60-m)*60;return `${d}°${String(m).padStart(2,'0')}'${q.toFixed(1).padStart(4,'0')}"${h}`};
+function datosEnlace(){
+  const la=num($('oLat').value),lo=num($('oLon').value),lb=num($('dLat').value),ob=num($('dLon').value),e=$('datosEnl');
+  if([la,lo,lb,ob].some(isNaN)||!T){e.textContent='Calcula el destino para ver los datos del enlace.';return}
+  const gd=groundDist(),L=[`A  ${dms(la,1)} ${dms(lo)}  (terreno ${num($('oAlt').value)||0} m + antena ${num($('oH').value)||0} m)`,`B  ${dms(lb,1)} ${dms(ob)}  (terreno ${num($('dAlt').value)||0} m + antena ${num($('dH').value)||0} m)`,
+    `Dirección ida ${T.az.toFixed(1)}° · regreso ${azBack(lb,ob,la,lo).toFixed(1)}°`,`Distancia mapa ${(T.d/1000).toFixed(2)} km · ${gd.l.trim()} ${(gd.v/1000).toFixed(2)} km`,`Elevación geométrica ${T.elG>=0?'+':''}${(T.elG!=null?T.elG:T.el).toFixed(2)}° · con curvatura ${T.el>=0?'+':''}${T.el.toFixed(2)}°`];
+  if(PFLAST&&PFLAST.key===PFKEY())L.push(`Terreno (mapa DEM): A ${Math.round(PFLAST.el[0])} m · B ${Math.round(PFLAST.el[PFLAST.el.length-1])} m`);
+  e.textContent=L.join('\n');
+}
+$('mapLayer').onclick=()=>{mapL=(mapL+1)%TILES.length;mapKey='';$('mapLayer').textContent=mapL?'⛰':'🛰'};
+$('mapEarth').onclick=()=>{
+  const la=num($('oLat').value),lo=num($('oLon').value),lb=num($('dLat').value),ob=num($('dLon').value);
+  if([la,lo,lb,ob].some(isNaN)||!T){$('mapMsg').textContent='Primero calcula el destino';return}
+  const ha=num($('oH').value)||0,hb=num($('dH').value)||0,gd=groundDist();
+  const d=`Distancia ${(T.d/1000).toFixed(2)} km · ${gd.l.trim()} ${(gd.v/1000).toFixed(2)} km · Azimut ${T.az.toFixed(1)}° · Regreso ${azBack(lb,ob,la,lo).toFixed(1)}° · Elevación ${T.el.toFixed(2)}°`;
+  const pm=(n,x,y,h)=>`<Placemark><name>${n}</name><Point><altitudeMode>relativeToGround</altitudeMode><coordinates>${x},${y},${h}</coordinates></Point></Placemark>`;
+  const kml=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Enlace A-B</name><Style id="l"><LineStyle><color>ff00ff00</color><width>3</width></LineStyle></Style>${pm('A',lo,la,ha)}${pm('B',ob,lb,hb)}<Placemark><name>Enlace A-B</name><description>${d}</description><styleUrl>#l</styleUrl><LineString><extrude>1</extrude><tessellate>1</tessellate><altitudeMode>relativeToGround</altitudeMode><coordinates>${lo},${la},${ha} ${ob},${lb},${hb}</coordinates></LineString></Placemark></Document></kml>`;
+  const u=URL.createObjectURL(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'})),a=document.createElement('a');a.href=u;a.download='enlace_AB.kml';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);
+  $('mapMsg').textContent='enlace_AB.kml descargado: ábrelo con Google Earth';setTimeout(()=>{if($('mapMsg').textContent.startsWith('enlace'))$('mapMsg').textContent=''},5000);
+};
+
+if(!window.isSecureContext||location.protocol==='file:'||location.protocol==='content:')$('proto').hidden=false;
+if('geolocation' in navigator)startGps();
+if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission!=='function')startOri();
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
